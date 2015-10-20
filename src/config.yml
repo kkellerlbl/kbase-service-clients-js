@@ -1,0 +1,34 @@
+## YAML Template.
+---
+package:
+    author: Erik Pearson
+    name: serviceclients
+    description: Javascript clients for services
+    date: October 20, 2015
+    version: 0.0.1
+source:
+    modules:
+        -
+            module: kb_service_workspace
+            file: workspace
+        -
+            module: kb_service_userProfile
+            file: UserProfile
+        -
+            module: kb_service_narrativeMethodStore
+            file: NarrativeMethodStore
+        -
+            module: kb_service_cdmi
+            file: CDMI_API
+        -
+            module: kb_service_cdmiEntity
+            file: CDMI_EntityAPI
+        -
+            module: kb_service_trees
+            file: KBaseTrees
+        -
+            module: kb_service_fbaModelServices
+            file: fbaModelServices
+        -
+            module: kb_service_userAndJobState
+            file: UserAndJobState
