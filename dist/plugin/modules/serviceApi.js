@@ -197,26 +197,20 @@ define([
                 })
                 .spread(function (collabs, data) {
                     var i;
-                    try {
-                        for (i = 0; i < data.length; i += 1) {
-                            // it is possible that a newly registered user, not even having a stub profile,
-                            // are in this list?? If so, remove that user from the network.
-                            // TODO: we need a way to report these cases -- they should not occur or be very rare.
-                            if (!data[i] || !data[i].user) {
-                                console.log('WARNING: user ' + usersToFetch[i] + ' is a sharing partner but has no profile.');
-                            } else {
-                                collabs[i].realname = data[i].user.realname;
-                            }
+                    for (i = 0; i < data.length; i += 1) {
+                        // it is possible that a newly registered user, not even having a stub profile,
+                        // are in this list?? If so, remove that user from the network.
+                        // TODO: we need a way to report these cases -- they should not occur or be very rare.
+                        if (!data[i] || !data[i].user) {
+                            console.log('WARNING: user ' + usersToFetch[i] + ' is a sharing partner but has no profile.');
+                        } else {
+                            collabs[i].realname = data[i].user.realname;
                         }
-                        collabs = collabs.filter(function (x) {
-                            return (x.realname ? true : false)
-                        });
-                        resolve(collabs);
-                    } catch (ex) {
-                        console.log('EX:');
-                        console.log(ex);
-                        reject(ex);
                     }
+                    collabs = collabs.filter(function (x) {
+                        return (x.realname ? true : false)
+                    });
+                    return collabs;
                 });
             }
             
