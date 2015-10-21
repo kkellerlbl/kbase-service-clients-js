@@ -13,7 +13,7 @@ source:
             file: workspace
         -
             module: kb_service_userProfile
-            file: UserProfile
+            file: userProfile
         -
             module: kb_service_narrativeMethodStore
             file: NarrativeMethodStore
