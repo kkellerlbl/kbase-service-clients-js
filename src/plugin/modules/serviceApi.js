@@ -1,7 +1,7 @@
 define([
     'bluebird',
     'kb_common_utils',
-    'kb_common_apiUtils',
+    'kb_service_utils',
     'kb_service_workspace',
     'kb_service_userProfile',
     'kb_service_narrativeMethodStore'
