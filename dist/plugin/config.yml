@@ -36,4 +36,6 @@ source:
         -
             module: kb_service_api
             file: serviceApi
-            
+        -
+            module: kb_serice_utils
+            file: serviceUtils

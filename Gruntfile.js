@@ -71,9 +71,9 @@ module.exports = function (grunt) {
             },
             plugin: {
                 files: [
-                    {
-                        cwd: 'src/plugin',
-                        src: '**.*',
+                    {   
+                        cwd: 'src/plugin', 
+                        src: '**',
                         dest: 'dist/plugin',
                         expand: true
                     }
