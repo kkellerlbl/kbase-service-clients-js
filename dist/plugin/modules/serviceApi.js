@@ -222,7 +222,8 @@ define([
             
             return {
                 getNarratives: getNarratives,
-                getCollaborators: getCollaborators
+                getCollaborators: getCollaborators,
+                getPermissions: getPermissions
             };
         }
         
