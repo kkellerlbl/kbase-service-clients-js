@@ -27,11 +27,11 @@ source:
             module: kb_service_trees
             file: KBaseTrees
         -
-            module: kb_service_fbaModelServices
-            file: fbaModelServices
-        -
             module: kb_service_userAndJobState
             file: UserAndJobState
+        -
+            module: kb_service_fba
+            file: fbaModelServices
         # derived from above
         -
             module: kb_service_api
