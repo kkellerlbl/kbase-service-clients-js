@@ -193,9 +193,9 @@ define([
                     var usersToFetch = collabs.map(function (x) {
                         return x.username
                     });
-                    return [collabs, Promise.resolve(userProfileClient.get_user_profile(usersToFetch))];
+                    return [collabs, usersToFetch, Promise.resolve(userProfileClient.get_user_profile(usersToFetch))];
                 })
-                .spread(function (collabs, data) {
+                .spread(function (collabs, usersToFetch, data) {
                     var i;
                     for (i = 0; i < data.length; i += 1) {
                         // it is possible that a newly registered user, not even having a stub profile,
@@ -208,7 +208,7 @@ define([
                         }
                     }
                     collabs = collabs.filter(function (x) {
-                        return (x.realname ? true : false)
+                        return (x.realname ? true : false);
                     });
                     return collabs;
                 });
