@@ -193,9 +193,9 @@ define([
                     var usersToFetch = collabs.map(function (x) {
                         return x.username
                     });
-                    return Promise.resolve(userProfileClient.get_user_profile(usersToFetch));
+                    return [collabs, Promise.resolve(userProfileClient.get_user_profile(usersToFetch))];
                 })
-                .then(function (data) {
+                .spread(function (collabs, data) {
                     var i;
                     try {
                         for (i = 0; i < data.length; i += 1) {
