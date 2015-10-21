@@ -1,0 +1,18 @@
+{
+  "name": "kbase-service-clients-js",
+  "version": "0.1,0",
+  "homepage": "",
+  "authors": [
+    "Erik Pearson <eapearson@lbl.gov>"
+  ],
+  "description": "",
+  "main": "src/plugin/config.yml",
+  "keywords": [
+    "kbase",
+    "service"
+  ],
+  "license": "KBase",
+  "ignore": ["src"],
+  "devDependencies": {
+  }
+}
