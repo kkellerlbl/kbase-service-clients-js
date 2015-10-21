@@ -146,7 +146,7 @@ define([
                     }
                 })
                 .then(function (narratives) {
-                    return this.getPermissions(narratives);
+                    return getPermissions(narratives);
                 })
                 .then(function (narratives) {
                     var collaborators = {}, i, perms, pass;
@@ -193,7 +193,7 @@ define([
                     var usersToFetch = collabs.map(function (x) {
                         return x.username
                     });
-                    return Promise.resolve(this.userProfileClient.get_user_profile(usersToFetch));
+                    return Promise.resolve(userProfileClient.get_user_profile(usersToFetch));
                 })
                 .then(function (data) {
                     var i;
