@@ -217,7 +217,9 @@ define([
             return {
                 getNarratives: getNarratives,
                 getCollaborators: getCollaborators,
-                getPermissions: getPermissions
+                getPermissions: getPermissions,
+                getApps: getApps,
+                getMethods: getMethods
             };
         }
         
