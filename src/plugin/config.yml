@@ -32,3 +32,8 @@ source:
         -
             module: kb_service_userAndJobState
             file: UserAndJobState
+        # derived from above
+        -
+            module: kb_service_api
+            file: serviceApi
+            

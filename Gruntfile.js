@@ -69,11 +69,11 @@ module.exports = function (grunt) {
                     }
                 }
             },
-            config: {
+            plugin: {
                 files: [
                     {
-                        cwd: 'src',
-                        src: 'config.yml',
+                        cwd: 'src/plugin',
+                        src: '**.*',
                         dest: 'dist/plugin',
                         expand: true
                     }
@@ -92,7 +92,7 @@ module.exports = function (grunt) {
     //    'clean:build'
     //]);
     grunt.registerTask('build', [
-        'copy:fixLib',
-        'copy:config'
+        'copy:plugin',
+        'copy:fixLib'        
     ]);
 };
