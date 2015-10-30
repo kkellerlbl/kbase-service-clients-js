@@ -8,7 +8,7 @@
 define([
     'bluebird',
     'kb_common_utils',
-    'kb_common_apiUtils',
+    'kb_service_utils',
     'kb_service_workspace'
 ],
     function (Promise, Utils, APIUtils, Workspace) {
