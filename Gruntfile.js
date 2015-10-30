@@ -59,7 +59,7 @@ module.exports = function (grunt) {
                     {
                         cwd: 'src/kbase-clients/js_clients',
                         src: '*.js',
-                        dest: 'dist/plugin/modules',
+                        dest: 'dist/plugin/modules/services',
                         expand: true
                     }
                 ],

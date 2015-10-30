@@ -10,28 +10,28 @@ source:
     modules:
         -
             module: kb_service_workspace
-            file: workspace
+            file: services/workspace
         -
             module: kb_service_userProfile
-            file: userProfile
+            file: services/userProfile
         -
             module: kb_service_narrativeMethodStore
-            file: NarrativeMethodStore
+            file: services/NarrativeMethodStore
         -
             module: kb_service_cdmi
-            file: CDMI_API
+            file: services/CDMI_API
         -
             module: kb_service_cdmiEntity
-            file: CDMI_EntityAPI
+            file: services/CDMI_EntityAPI
         -
             module: kb_service_trees
-            file: KBaseTrees
+            file: services/KBaseTrees
         -
             module: kb_service_userAndJobState
-            file: UserAndJobState
+            file: services/UserAndJobState
         -
             module: kb_service_fba
-            file: fbaModelServices
+            file: services/fbaModelServices
         # derived from above
         -
             module: kb_service_api
@@ -39,3 +39,6 @@ source:
         -
             module: kb_service_utils
             file: serviceUtils
+        -
+            module: kb_service_workspaceClient
+            file: workspaceClient
