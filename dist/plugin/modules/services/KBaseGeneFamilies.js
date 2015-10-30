@@ -123,7 +123,7 @@ function KBaseGeneFamilies(url, auth, auth_cb) {
 
         var promise = deferred.promise();
         promise.xhr = xhr;
-        return promise;
+        return Promise.resolve(promise);
     }
 }
 

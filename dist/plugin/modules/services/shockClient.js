@@ -81,7 +81,7 @@ function ShockClient(params) {
     		type: "GET"
     	});
     	
-    	return promise;
+    	return Promise.resolve(promise);
     };
 
     self.get_nodes = function (filters, ret, errorCallback) {

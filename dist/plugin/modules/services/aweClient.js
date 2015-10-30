@@ -47,7 +47,7 @@ function AweClient(params) {
     		headers: self.auth_header,
     		type: "GET"
     	});
-    	return promise;
+    	return Promise.resolve(promise);
     };
    
 }

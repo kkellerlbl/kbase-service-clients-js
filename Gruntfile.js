@@ -24,8 +24,8 @@ module.exports = function (grunt) {
             namespaceRe = /^function (.+?)\(/m,
             namespace = content.match(namespaceRe)[1],
             requireJsStart = 'define(["jquery", "bluebird"], function ($, Promise) {\n"use strict";',
-            requireJsEnd = 'return ' + namespace + ';\n});',
-            repairedContent = content
+            requireJsEnd = 'return ' + namespace + ';\n});',            
+            repairedContent = content.replace(/return promise;/, 'return Promise.resolve(promise);')
             .replace(/([^=!])==([^=])/g, '$1===$2')
             .replace(/!=([^=])/g, '!==$1');
 

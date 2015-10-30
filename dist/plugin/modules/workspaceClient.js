@@ -11,7 +11,7 @@ define([
     'kb_service_utils',
     'kb_service_workspace'
 ],
-    function (Promise, Utils, serviceUtils, Workspace) {
+    function (Promise, Utils, APIUtils, Workspace) {
         'use strict';
         return Object.create({}, {
             init: {
@@ -56,7 +56,7 @@ define([
                             .then(function (data) {
                                 var workspaces = [], i, wsInfo;
                                 for (i = 0; i < data.length; i += 1) {
-                                    wsInfo = serviceUtils.workspace_metadata_to_object(data[i]);
+                                    wsInfo = APIUtils.workspace_metadata_to_object(data[i]);
                                     if (this.isValidNarrative(wsInfo) && this.applyNarrativeFilter(cfg.filter)) {
                                         workspaces.push(wsInfo);
                                     }
@@ -85,7 +85,7 @@ define([
                                                 continue;
                                             }
                                             // Make sure it is a valid narrative object.
-                                            var object = serviceUtils.object_info_to_object(data[i]);
+                                            var object = APIUtils.object_info_to_object(data[i]);
                                             if (object.typeName !== 'Narrative') {
                                                 console.log('WARNING: workspace ' + object.wsid + ' object ' + object.id + ' is not a valid Narrative object');
                                                 continue;
@@ -172,7 +172,7 @@ define([
                                     return;
                                 }
 
-                                var object = serviceUtils.object_info_to_object(data[0]);
+                                var object = APIUtils.object_info_to_object(data[0]);
                                 resolve(object);
                             }.bind(this))
                             .catch(function (err) {
