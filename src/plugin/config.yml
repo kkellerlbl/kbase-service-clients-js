@@ -22,7 +22,7 @@ source:
             file: services/CDMI
         -
             module: kb_service_cdmiEntity
-            file: services/CDMI
+            file: services/CDMI_Entity
         -
             module: kb_service_trees
             file: services/KBaseTrees
