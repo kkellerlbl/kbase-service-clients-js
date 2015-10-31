@@ -19,10 +19,10 @@ source:
             file: services/NarrativeMethodStore
         -
             module: kb_service_cdmi
-            file: services/CDMI_API
+            file: services/CDMI
         -
             module: kb_service_cdmiEntity
-            file: services/CDMI_EntityAPI
+            file: services/CDMI
         -
             module: kb_service_trees
             file: services/KBaseTrees
