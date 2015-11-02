@@ -28,7 +28,7 @@ source:
             file: services/KBaseTrees
         -
             module: kb_service_userAndJobState
-            file: services/UserAndJobState
+            file: services/userandjobstate
         -
             module: kb_service_fba
             file: services/fbaModelServices
