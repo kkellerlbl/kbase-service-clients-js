@@ -8,6 +8,11 @@ define([
         // Maybe a kbase services utility module?
         workspace_metadata_to_object: {
             value: function (wsInfo) {
+                return this.workspace_info_to_object(wsInfo);
+            }
+        },
+        workspaceInfoToObject: {
+            value: function (wsInfo) {
                 return {
                     id: wsInfo[0],
                     name: wsInfo[1],
@@ -22,6 +27,8 @@ define([
                 };
             }
         },
+        
+        
         /*UnspecifiedObject data;
          object_info info;
          list<ProvenanceAction> provenance;
@@ -44,6 +51,11 @@ define([
         },
         object_info_to_object: {
             value: function (data) {
+                return this.objectInfoToObject(data);
+            }
+        },
+        objectInfoToObject: {
+            value: function (data) {
                 var type = data[2].split(/[-\.]/);
 
                 return {
@@ -58,7 +70,7 @@ define([
                     checksum: data[8],
                     size: data[9],
                     metadata: data[10],
-                    ref: data[7] + '/' + data[1],
+                    ref: data[7] + '/' + data[1] + '/' + data[4],
                     obj_id: 'ws.' + data[6] + '.obj.' + data[0],
                     typeModule: type[0],
                     typeName: type[1],
@@ -68,6 +80,7 @@ define([
                 };
             }
         },
+        
         makeWorkspaceObjectId: {
             value: function (workspaceId, objectId) {
                 return 'ws.' + workspaceId + '.obj.' + objectId;
