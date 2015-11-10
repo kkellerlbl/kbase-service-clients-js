@@ -11,7 +11,7 @@ define([
                 return this.workspace_info_to_object(wsInfo);
             }
         },
-        workspace_info_to_object: {
+        workspaceInfoToObject: {
             value: function (wsInfo) {
                 return {
                     id: wsInfo[0],
@@ -27,6 +27,8 @@ define([
                 };
             }
         },
+        
+        
         /*UnspecifiedObject data;
          object_info info;
          list<ProvenanceAction> provenance;
@@ -48,6 +50,11 @@ define([
 
         },
         object_info_to_object: {
+            value: function (data) {
+                return this.objectInfoToObject(data);
+            }
+        },
+        objectInfoToObject: {
             value: function (data) {
                 var type = data[2].split(/[-\.]/);
 
@@ -73,6 +80,7 @@ define([
                 };
             }
         },
+        
         makeWorkspaceObjectId: {
             value: function (workspaceId, objectId) {
                 return 'ws.' + workspaceId + '.obj.' + objectId;
