@@ -18,7 +18,7 @@ define([
                 }),
                 narrativeMethodStoreClient = new NarrativeMethodStore(runtime.getConfig('services.narrative_method_store.url'), {
                     token: runtime.getService('session').getAuthToken()
-                })
+                });
             function isValidNarrative (workspaceObject) {
                 if (workspaceObject.metadata.narrative &&
                     // corrupt workspaces may have narrative set to something other than the object id of the narrative
@@ -38,7 +38,7 @@ define([
                     .then(function (data) {
                         var workspaces = [], i, wsInfo;
                         for (i = 0; i < data.length; i += 1) {
-                            wsInfo = APIUtils.workspace_metadata_to_object(data[i]);
+                            wsInfo = APIUtils.workspaceInfoToObject(data[i]);
                             if (isValidNarrative(wsInfo) && applyNarrativeFilter(cfg.filter)) {
                                 workspaces.push(wsInfo);
                             }
