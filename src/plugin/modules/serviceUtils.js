@@ -8,7 +8,7 @@ define([
         // Maybe a kbase services utility module?
         workspace_metadata_to_object: {
             value: function (wsInfo) {
-                return this.workspace_info_to_object(wsInfo);
+                return this.workspaceInfoToObject(wsInfo);
             }
         },
         workspaceInfoToObject: {
