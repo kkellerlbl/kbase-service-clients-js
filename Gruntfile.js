@@ -1,5 +1,7 @@
+/*global module*/
+/*jslint white:true*/
 module.exports = function (grunt) {
-
+    'use strict';
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-copy');
@@ -24,7 +26,7 @@ module.exports = function (grunt) {
             namespaceRe = /^function (.+?)\(/m,
             namespace = content.match(namespaceRe)[1],
             requireJsStart = 'define(["jquery", "bluebird"], function ($, Promise) {\n"use strict";',
-            requireJsEnd = 'return ' + namespace + ';\n});',            
+            requireJsEnd = 'return ' + namespace + ';\n});',
             repairedContent = content.replace(/return promise;/, 'return Promise.resolve(promise);')
             .replace(/([^=!])==([^=])/g, '$1===$2')
             .replace(/!=([^=])/g, '!==$1');
@@ -59,7 +61,7 @@ module.exports = function (grunt) {
                     {
                         cwd: 'src/kbase-clients/js_clients',
                         src: '*.js',
-                        dest: 'dist/plugin/modules/services',
+                        dest: 'dist/kb/service/client',
                         expand: true
                     }
                 ],
@@ -69,10 +71,20 @@ module.exports = function (grunt) {
                     }
                 }
             },
+            build: {
+                files: [
+                    {
+                        cwd: 'src',
+                        src: '*.js',
+                        dest: 'dist/kb/service',
+                        expand: true
+                    }
+                ]
+            },
             plugin: {
                 files: [
-                    {   
-                        cwd: 'src/plugin', 
+                    {
+                        cwd: 'src/plugin',
                         src: '**',
                         dest: 'dist/plugin',
                         expand: true
@@ -92,7 +104,7 @@ module.exports = function (grunt) {
     //    'clean:build'
     //]);
     grunt.registerTask('build', [
-        'copy:plugin',
-        'copy:fixLib'        
+        'copy:build',
+        'copy:fixLib'
     ]);
 };
