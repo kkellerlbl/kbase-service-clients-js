@@ -71,6 +71,21 @@ module.exports = function (grunt) {
                     }
                 }
             },
+            fixLibPLugin: {
+                files: [
+                    {
+                        cwd: 'src/kbase-clients/js_clients',
+                        src: '*.js',
+                        dest: 'dist/plugin/modules/services',
+                        expand: true
+                    }
+                ],
+                options: {
+                    process: function (content) {
+                        return fixLib(content);
+                    }
+                }
+            },
             build: {
                 files: [
                     {
@@ -105,6 +120,8 @@ module.exports = function (grunt) {
     //]);
     grunt.registerTask('build', [
         'copy:build',
-        'copy:fixLib'
+        'copy:fixLib',
+        'copy:plugin',
+        'copy:fixLibPLugin'
     ]);
 };
