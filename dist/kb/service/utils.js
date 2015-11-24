@@ -1,5 +1,5 @@
 define([
-    'kb_common_utils'
+    'kb/common/utils'
 ], function (Utils) {
     "use strict";
     return Object.create({}, {
