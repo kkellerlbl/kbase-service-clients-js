@@ -1,8 +1,8 @@
 define([
     'bluebird',
     'md5',
-    'kb_common_utils',
-    'kb_service_userProfile'
+    'kb/common/utils',
+    'kb/service/client/UserProfile'
 ],
     function (Promise, md5, Utils, UserProfileService) {
         "use strict";

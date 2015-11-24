@@ -1,10 +1,10 @@
 define([
     'bluebird',
-    'kb_common_utils',
-    'kb_service_utils',
-    'kb_service_workspace',
-    'kb_service_userProfile',
-    'kb_service_narrativeMethodStore'
+    'kb/common/utils',
+    'kb/service/utils',
+    'kb/service/client/workspace',
+    'kb/service/client/UserProfile',
+    'kb/service/client/NarrativeMethodStore'
 ],
     function (Promise, Utils, APIUtils, Workspace, UserProfile, NarrativeMethodStore) {
 

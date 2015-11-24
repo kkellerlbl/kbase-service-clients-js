@@ -38,7 +38,7 @@ source:
             file: serviceApi
         -
             module: kb_service_utils
-            file: serviceUtils
+            file: utils
         -
             module: kb_service_workspaceClient
             file: workspaceClient
