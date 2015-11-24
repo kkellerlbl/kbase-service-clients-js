@@ -121,7 +121,7 @@ module.exports = function (grunt) {
     grunt.registerTask('build', [
         'copy:build',
         'copy:fixLib',
-        'copy:plugin',
-        'copy:fixLibPLugin'
+        //'copy:plugin',
+        //'copy:fixLibPLugin'
     ]);
 };
