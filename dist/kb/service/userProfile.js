@@ -1,23 +1,31 @@
+/*global define */
+/*jslint white: true, browser: true  */
+
 define([
     'bluebird',
-    'md5',
     'kb/common/utils',
+    'md5',
     'kb/service/client/UserProfile'
 ],
-    function (Promise, md5, Utils, UserProfileService) {
+    function (Promise, Utils, md5, UserProfileService) {
         "use strict";
         var UserProfile = Object.create({}, {
             init: {
                 value: function (cfg) {
+                    if (!cfg.runtime) {
+                        throw 'Cannot create a profile object without a runtime';
+                    }
+                    this.runtime = cfg.runtime;
+
                     if (!cfg.username) {
                         throw 'Cannot create a profile object without a username';
                     }
                     this.username = cfg.username;
-                    if (R.isLoggedIn()) {
-                        if (R.hasConfig('services.user_profile.url')) {
 
-                            this.userProfileClient = new UserProfileService(R.getConfig('services.user_profile.url'), {
-                                token: R.getAuthToken()
+                    if (this.runtime.service('session').isLoggedIn()) {
+                        if (this.runtime.hasConfig('services.user_profile.url')) {
+                            this.userProfileClient = new UserProfileService(this.runtime.getConfig('services.user_profile.url'), {
+                                token: this.runtime.service('session').getAuthToken()
                             });
                         } else {
                             throw 'The user profile client url is not defined';
@@ -29,7 +37,7 @@ define([
                 }
             },
             loadProfile: {
-                value: function (username) {
+                value: function () {
                     return new Promise(function (resolve, reject, notify) {
                         if (!this.userProfileClient) {
                             // We don't fetch any data if a user is not logged in. 
@@ -84,8 +92,8 @@ define([
              */
             updateProfile: {
                 value: function (newRecord) {
-                    var recordCopy = Utils.merge({}, this.userRecord);
-                    var merged = Utils.merge(recordCopy, newRecord);
+                    var recordCopy = Utils.merge({}, this.userRecord),
+                        merged = Utils.merge(recordCopy, newRecord);
                     if (this.userRecordHistory.length === 10) {
                         this.userRecordHistory.pop();
                     }
@@ -121,15 +129,12 @@ define([
                     } else {
                         profileStatus = 'none';
                     }
-                    return profileStatus
+                    return profileStatus;
                 }
             },
             createProfile: {
                 value: function () {
-
-                    // TODO: check that the current profile is in 'stub' state.
-                    var profile = this;
-                    return new Promise(function (resolve, reject, notify) {
+                    return new Promise(function (resolve, reject) {
                         Promise.resolve(this.userProfileClient.lookup_globus_user([this.username]))
                             .then(function (data) {
 
@@ -170,9 +175,7 @@ define([
             },
             createStubProfile: {
                 value: function (options) {
-
-                    // TODO: Ensure that there is no profile?
-                    return new Promise(function (resolve, reject, notify) {
+                    return new Promise(function (resolve, reject) {
                         Promise.resolve(this.userProfileClient.lookup_globus_user([this.username]))
                             .then(function (data) {
 
@@ -226,7 +229,7 @@ define([
                             preferences: {},
                             userdata: null
                         }
-                    }
+                    };
                     return record;
                 }
             },
@@ -247,19 +250,18 @@ define([
             getAvatarURL: {
                 value: function (options) {
                     options = options || {};
-                    var gdefault = this.getProp('profile.userdata.avatar.gravatar_default');
-                    var email = this.getProp('profile.userdata.email');
+                    var gdefault = this.getProp('profile.userdata.avatar.gravatar_default'),
+                        email = this.getProp('profile.userdata.email');
                     if (gdefault && email) {
                         return this.makeGravatarURL(email, options.size || 100, options.rating || 'pg', gdefault);
-                    } else {
-                        return '/modules/userprofile/nouserpic.png';
                     }
+                    return '/images/nouserpic.png';
                 }
             },
             makeGravatarURL: {
                 value: function (email, size, rating, gdefault) {
-                    var md5Hash = md5.hash(email);
-                    var url = 'https://www.gravatar.com/avatar/' + md5Hash + '?s=' + size + '&amp;r=' + rating + '&d=' + gdefault
+                    var md5Hash = md5.hash(email),
+                        url = 'https://www.gravatar.com/avatar/' + md5Hash + '?s=' + size + '&amp;r=' + rating + '&d=' + gdefault;
                     return url;
                 }
             },
@@ -282,7 +284,7 @@ define([
                                         maxLength: 100
                                     },
                                     thumbnail: {
-                                        type: 'string',
+                                        type: 'string'
                                     }
                                     /*avatar: {
                                      type: 'object',
@@ -323,7 +325,7 @@ define([
                                             },
                                             personal_statement: {
                                                 type: 'string',
-                                                title: 'Personal Statement',
+                                                title: 'Personal Statement'
                                             },
                                             user_class: {
                                                 type: 'string',
@@ -388,9 +390,8 @@ define([
                 value: function (propName, defaultValue) {
                     if (this.userRecord) {
                         return Utils.getProp(this.userRecord, propName, defaultValue);
-                    } else {
-                        return defaultValue;
                     }
+                    return defaultValue;
                 }
             },
             nthHistory: {
@@ -423,9 +424,17 @@ define([
                      
                      
                      */
-                    var status = null;
-
-                    var state = this.getProfileStatus();
+                    var status = null,
+                        state = this.getProfileStatus(),
+                        requiredFields = [
+                            'user.username', 'profile.userdata.email', 'profile.userdata.user_class', 'profile.userdata.location'
+                        ],
+                        fieldsToCheck = [
+                            'user.username', 'profile.userdata.location', 'profile.userdata.email', 'profile.userdata.user_class', 'profile.userdata.roles',
+                            'profile.userdata.affiliations', 'profile.userdata.personal_statement'
+                        ],
+                        formSchema = this.getUserProfileSchema(),
+                        missing = [], i;
                     switch (state) {
 
                         case 'profile':
@@ -436,33 +445,28 @@ define([
                             // STUB PROFILE
                             return {
                                 status: 'stub'
-                            }
-                            break;
+                            };
                         case 'accountonly':
                             // NO PROFILE
                             // NB: should not be here!!
                             // no profile, but have basic account info.
                             return {
                                 status: 'error'
-                            }
-                            break;
+                            };
                         case 'error':
                             return {
                                 status: 'error'
-                            }
-                            break;
+                            };
                         case 'none':
                             // NOT FOUND
                             // no profile, no basic aaccount info
                             return {
                                 status: 'notfound'
-                            }
-                            break;
+                            };
                         default:
                             return {
                                 status: 'error'
-                            }
-                            break;
+                            };
                     }
 
                     // rate the profile based on percent of fields completed.
@@ -476,20 +480,9 @@ define([
                      the following fields:
                      real name, location, email, user class, roles, affiliations, personal statement
                      */
-                    var requiredFields = [
-                        'user.username', 'profile.userdata.email', 'profile.userdata.user_class', 'profile.userdata.location'
-                    ];
 
-                    var fieldsToCheck = [
-                        'user.username', 'profile.userdata.location', 'profile.userdata.email', 'profile.userdata.user_class', 'profile.userdata.roles',
-                        'profile.userdata.affiliations', 'profile.userdata.personal_statement'
-                    ];
 
-                    // ensure required fields.
-                    var formSchema = this.getUserProfileSchema();
-                    var missing = [];
-
-                    for (var i = 0; i < requiredFields.length; i++) {
+                    for (i = 0; i < requiredFields.length; i++) {
                         var value = Utils.getProp(this.userRecord, requiredFields[i]);
                         if (Utils.isBlank(value)) {
                             status = 'requiredincomplete';
@@ -503,10 +496,10 @@ define([
                             status: status,
                             message: 'The following required profile fields are missing: ' + missing.join(', '),
                             missingFields: missing
-                        }
+                        };
                     }
 
-                    for (var i = 0; i < fieldsToCheck.length; i++) {
+                    for (i = 0; i < fieldsToCheck.length; i++) {
                         var value = Utils.getProp(this.userRecord, fieldsToCheck[i]);
                         if (fieldsToCheck[i] === 'profile.userdata.personal_statement') {
                         }
@@ -524,12 +517,12 @@ define([
                             message: 'The profile is complete, but could be richer.',
                             percentComplete: percentComplete,
                             missingFields: missing
-                        }
+                        };
                     } else {
                         return {
                             status: 'complete',
                             message: 'Congratulations, your profile is complete!'
-                        }
+                        };
                     }
 
 
