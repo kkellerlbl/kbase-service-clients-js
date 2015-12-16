@@ -38,27 +38,22 @@ define([
             },
             loadProfile: {
                 value: function () {
-                    return new Promise(function (resolve, reject, notify) {
+                    return Promise.try(function () {
                         if (!this.userProfileClient) {
                             // We don't fetch any data if a user is not logged in. 
                             this.userRecord = null;
-                            resolve(this);
-                        } else {
-                            Promise.resolve(this.userProfileClient.get_user_profile([this.username]))
-                                .then(function (data) {
-                                    if (data[0]) {
-                                        // profile found
-                                        this.userRecord = data[0];
-                                        resolve(this);
-                                    } else {
-                                        this.userRecord = null;
-                                        resolve(this);
-                                    }
-                                }.bind(this))
-                                .catch(function (err) {
-                                    reject(err);
-                                });
+                            return this;
                         }
+                        return Promise.resolve(this.userProfileClient.get_user_profile([this.username]))
+                            .then(function (data) {
+                                if (data[0]) {
+                                    // profile found
+                                    this.userRecord = data[0];
+                                } else {
+                                    this.userRecord = null;
+                                }
+                                return this;
+                            }.bind(this));
                     }.bind(this));
                 }
             },
@@ -134,43 +129,37 @@ define([
             },
             createProfile: {
                 value: function () {
-                    return new Promise(function (resolve, reject) {
-                        Promise.resolve(this.userProfileClient.lookup_globus_user([this.username]))
+                    return Promise.try(function () {
+                        var that = this;
+                        return Promise.resolve(that.userProfileClient.lookup_globus_user([that.username]))
                             .then(function (data) {
-
-                                if (!data || !data[this.username]) {
-                                    reject('No user account found for ' + this.username);
-                                    return;
+                                if (!data || !data[that.username]) {
+                                    throw new Error('No user account found for ' + that.username);
                                 }
-
-                                var userData = data[this.username];
-
+                                return data[that.username];
+                            })
+                            .then(function (userData) {
                                 // account data has been set ... copy the account fields to the corresponding user and profile fields.
-                                this.userRecord = this.makeProfile({
+                                that.userRecord = that.makeProfile({
                                     username: userData.userName,
                                     realname: userData.fullName,
                                     email: userData.email,
                                     account: userData,
                                     createdBy: 'user'
                                 });
-
-                                Promise.resolve(this.userProfileClient.set_user_profile({
-                                    profile: this.userRecord
-                                }))
-                                    .then(function () {
-                                        resolve();
-                                    })
-                                    .catch(function (err) {
-                                        console.log('ERROR SAVING USER PROFILE: ' + err);
-                                        console.log(err);
-                                        reject(err);
-                                    });
-
-                            }.bind(this))
+                                return that.userProfileClient.set_user_profile({
+                                    profile: that.userRecord
+                                });
+                            })
+                            .then(function () {
+                                return that;
+                            })
                             .catch(function (err) {
-                                reject(err);
+                                console.log('ERROR SAVING USER PROFILE: ' + err);
+                                console.log(err);
+                                throw err;
                             });
-                    }.bind(this));
+                    });
                 }
             },
             createStubProfile: {
