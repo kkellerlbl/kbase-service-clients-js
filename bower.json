@@ -28,7 +28,8 @@
     },
     "ignore": [
         "src",
-        ".gitignore"
+        ".gitignore",
+        "package.json"
     ],
     "license": "SEE LICENSE IN LICENSE.md"
 }
