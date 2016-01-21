@@ -3,8 +3,8 @@ define([
     'kb/common/utils',
     'kb/service/utils',
     'kb/service/client/workspace',
-    'kb/service/client/UserProfile',
-    'kb/service/client/NarrativeMethodStore'
+    'kb/service/client/userProfile',
+    'kb/service/client/narrativeMethodStore'
 ],
     function (Promise, Utils, APIUtils, Workspace, UserProfile, NarrativeMethodStore) {
 
