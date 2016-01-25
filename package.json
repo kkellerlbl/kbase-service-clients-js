@@ -1,10 +1,10 @@
 {
-  "name": "kbase-client-api",
-  "version": "1.0.0",
+  "name": "kbase-service-clients-js",
+  "version": "0.1.0",
   "description": "Javascript clients for the KBase API",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kbase"
+    "url": "https://github.com/kbase/kbase-service-clients-js"
   },
   "author": "DoE Systems Biology Knowledgebase",
   "devDependencies": {"bluebird": "2.9.34",
