@@ -70,7 +70,7 @@ define([
                     checksum: data[8],
                     size: data[9],
                     metadata: data[10],
-                    ref: data[7] + '/' + data[1] + '/' + data[4],
+                    ref: data[6] + '/' + data[0] + '/' + data[4],
                     obj_id: 'ws.' + data[6] + '.obj.' + data[0],
                     typeModule: type[0],
                     typeName: type[1],
