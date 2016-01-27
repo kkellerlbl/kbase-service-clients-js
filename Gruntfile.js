@@ -62,7 +62,13 @@ module.exports = function (grunt) {
                         cwd: 'src/kbase-clients/js_clients',
                         src: '*.js',
                         dest: 'dist/kb/service/client',
-                        expand: true
+                        expand: true,
+                        filter: function (file) {
+                            if (file.match(/shock\.js$/)) {
+                                return false;
+                            }
+                            return true;
+                        }
                     }
                 ],
                 options: {
@@ -85,6 +91,16 @@ module.exports = function (grunt) {
                         return fixLib(content);
                     }
                 }
+            },
+            unfixLib: {
+                files: [
+                    {
+                        cwd: 'src/kbase-clients/js_clients',
+                        src: 'shock.js',
+                        dest: 'dist/kb/service/client',
+                        expand: true,
+                    }
+                ]
             },
             build: {
                 files: [
@@ -121,7 +137,8 @@ module.exports = function (grunt) {
     grunt.registerTask('build', [
         'copy:build',
         'copy:fixLib',
-        //'copy:plugin',
-        //'copy:fixLibPLugin'
+        'copy:unfixLib'
+            //'copy:plugin',
+            //'copy:fixLibPLugin'
     ]);
 };
