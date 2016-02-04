@@ -8,7 +8,7 @@ define([
     'kb/service/client/userProfile'
 ],
     function (Promise, Utils, md5, UserProfileService) {
-        "use strict";
+        'use strict';
         var UserProfile = Object.create({}, {
             init: {
                 value: function (cfg) {
@@ -244,7 +244,8 @@ define([
                     if (gdefault && email) {
                         return this.makeGravatarURL(email, options.size || 100, options.rating || 'pg', gdefault);
                     }
-                    return '/images/nouserpic.png';
+                    // no url returned means that the caller has to provide some default.
+                    return null;
                 }
             },
             makeGravatarURL: {

@@ -8,7 +8,7 @@ define([
     'kb/service/client/userProfile'
 ],
     function (Promise, Utils, md5, UserProfileService) {
-        "use strict";
+        'use strict';
         var UserProfile = Object.create({}, {
             init: {
                 value: function (cfg) {
