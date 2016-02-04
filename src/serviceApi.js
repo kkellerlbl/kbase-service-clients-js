@@ -34,7 +34,7 @@ define([
             }
             function getNarratives(cfg) {
                 // get all the narratives the user can see.
-                return Promise.resolve(workspaceClient.list_workspace_info(cfg.params))
+                return workspaceClient.list_workspace_info(cfg.params)
                     .then(function (data) {
                         var workspaces = [], i, wsInfo;
                         for (i = 0; i < data.length; i += 1) {
@@ -51,16 +51,15 @@ define([
                         });
 
                         if (objectRefs.length === 0) {
-                            resolve([]);
-                            return;
+                            return [workspaces, []];
                         }
 
                         // Now get the corresponding object metadata for each narrative workspace
-                        return [workspaces, Promise.resolve(workspaceClient.get_object_info_new({
+                        return [workspaces, workspaceClient.get_object_info_new({
                             objects: objectRefs,
                             ignoreErrors: 1,
                             includeMetadata: 1
-                        }))];
+                        })];
                     })
                     .spread(function (workspaces, data) {
                         var narratives = [], i;
@@ -96,14 +95,14 @@ define([
             function getPermissions (narratives) {
                 return Promise.try(function () {
                     if (narratives.length === 0) {
-                        return;
+                        return [];
                     }
                     var promises = narratives.map(function (narrative) {
-                        return Promise.resolve(workspaceClient.get_permissions({
+                        return workspaceClient.get_permissions({
                             id: narrative.workspace.id
-                        }));
+                        });
                     }),
-                        username = runtime.getService('session').getUsername();
+                        username = runtime.service('session').getUsername();
                         return Promise.all(promises)
                             .then(function (permissions) {
                                 for (var i = 0; i < permissions.length; i++) {
@@ -132,10 +131,10 @@ define([
                 });
             }
             function getApps() {
-                return Promise.resolve(narrativeMethodStoreClient.list_apps({}));
+                return narrativeMethodStoreClient.list_apps({});
             }
             function getMethods() {
-                return Promise.resolve(narrativeMethodStoreClient.list_methods({}));
+                return narrativeMethodStoreClient.list_methods({});
             }
             function getCollaborators(options) {
                 var users = (options && options.users) ? options.users : [];
@@ -162,7 +161,7 @@ define([
                         if (_.some(users, function (user) {
                             if (narratives[i].workspace.owner === user ||
                                 _.find(perms, function (x) {
-                                    return x.username === user
+                                    return x.username === user;
                                 })) {
                                 return false;
                             } else {
@@ -193,7 +192,7 @@ define([
                     var usersToFetch = collabs.map(function (x) {
                         return x.username
                     });
-                    return [collabs, usersToFetch, Promise.resolve(userProfileClient.get_user_profile(usersToFetch))];
+                    return [collabs, usersToFetch, userProfileClient.get_user_profile(usersToFetch)];
                 })
                 .spread(function (collabs, usersToFetch, data) {
                     var i;
