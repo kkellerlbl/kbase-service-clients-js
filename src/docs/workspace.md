@@ -184,6 +184,14 @@ Returns the version of the workspace service.
 
 #### arguments
 
+none
+
+#### returns
+
+{string} - A version string in semver format.
+
+#### arguments
+
 _none_
 
 ### create_workspace
@@ -206,7 +214,7 @@ _to do_
 
 _deprecated - see get_workspace_info_
 
-### get_workspace_info(workspaceId)
+### get_workspace_info *workspaceIdentity*
 
 Get information associated with a workspace.
 
@@ -222,7 +230,25 @@ Note: You might find it convenient to use the ```workspaceInfoToObject``` method
 
 {workpace_info}
 
+#### examples
 
+```
+var workspaceId = {
+  id: 1052
+};
+workspace.get_workspace_info(workspaceId)
+  .then(function (wsInfo) {
+     var workspaceInfoObject = utils.workspaceInfoToObject(wsInfo);
+     console.log('This workspace has the name: ' + workspaceInfoObject.name);
+  })
+  .catch(function (err) {
+     console.error('The request to the workspace produced an error: ' + err.error.message);
+  });
+```
+
+Note:
+- assuming a workspace client has been created and kb/service/utils
+- the error object returned by service clients is "wrapped" - what you would expect as an error is available as the *error* property.
 
 
 ### get_workspace_description
@@ -309,7 +335,7 @@ _to do_
 
 _deprecated, use instead get_object_info_new_
 
-### get_object_info_new
+### get_object_info_new *objectInfoParam*
 
 Get information about objects from the workspace.
 
@@ -319,7 +345,7 @@ Input parameters for the "get_object_info_new" function.
 	
 #### arguments
 
-The argument is an object with the following properties:
+The argument is an object of type *ObjectInfoParam* with the following properties:
 
 ##### required
 
