@@ -28,7 +28,7 @@ Size limits:
 
 ## Types
 
-### WorkspaceIdentity
+### <a name="WorkspaceIdentity"></a>WorkspaceIdentity
 
 A workspace identifier.
 
@@ -84,22 +84,25 @@ An Object Reference is a string which may be used to uniquely identify an object
 
 There are two forms of an object reference:
 
-"[ws_name or id]/[obj_name or id]/[obj_ver]" - for example,
+```
+[ws_name or id]/[obj_name or id]/[obj_ver]
+```
 
-"MyFirstWorkspace/MyFirstObject/3" would identify the third version
-of an object called MyFirstObject in the workspace called
-MyFirstWorkspace. 42/Panic/1 would identify the first version of
-the object name Panic in workspace with id 42. Towel/1/6 would
-identify the 6th version of the object with id 1 in the Towel
-workspace. 
+for example, 
 
-"kb|ws.[ws_id].obj.[obj_id].ver.[obj_ver]" - for example, 
+- ```MyFirstWorkspace/MyFirstObject/3``` would identify the third version of an object called ```MyFirstObject``` in the workspace called ```MyFirstWorkspace```,
+- ```42/Panic/1``` would identify the first version of the object name ```Panic``` in workspace with id ```42```, and
+- ```Towel/1/6``` would identify the 6th version of the object with id ```1``` in the ```Towel``` workspace. 
 
-"kb|ws.23.obj.567.ver.2" would identify the second version of an
-object with id 567 in a workspace with id 23.
+```
+kb|ws.[ws_id].obj.[obj_id].ver.[obj_ver]
+```
 
-In all cases, if the version number is omitted, the latest version of
-the object is assumed.
+for example, 
+
+- ```kb|ws.23.obj.567.ver.2``` would identify the second version of an object with id ```567``` in a workspace with id ```23```.
+
+In all cases, if the version number is omitted, the latest version of the object is assumed.
 
 ### ObjectIdentity
 
@@ -131,15 +134,18 @@ ref {obj_rev}
 
 
 
-- Workspace identifier
-    - numerical id of the workspace
-    - or name of the workspace, where the name can also be a KBase ID including the numerical id,
+### Workspace identifier
+
+- numerical id of the workspace
+- or name of the workspace, where the name can also be a KBase ID including the numerical id,
+
 ```
 e.g. kb|ws.35.
         ws_id wsid - the numerical ID of the workspace.
         ws_name workspace - name of the workspace or the workspace ID
                 in KBase format, e.g. kb|ws.78.
 ```
+
 AND 
 One, and only one, of the numerical id or name of the object.
         obj_id objid- the numerical ID of the object.
@@ -165,16 +171,14 @@ typedef structure {
 
 Input parameters for the "get_object_info_new" function.
 	
-		Required arguments:
-		list<ObjectIdentity> objects - the objects for which the information
-			should be fetched
-		
-		Optional arguments:
-		boolean includeMetadata - include the object metadata in the returned
-			information. Default false.
-		boolean ignoreErrors - Don't throw an exception if an object cannot
-			be accessed; return null for that object's information instead.
-			Default false.
+objects {array of ObjectIdentity}
+: the objects for which the information should be fetched
+
+includeMetadata {boolean} [false]
+: include the object metadata in the returned information. Default false.
+
+ignoreErrors {boolean} [false]
+: Don't throw an exception if an object cannot be accessed; return null for that object's information instead.
 
 ## Methods
 
@@ -214,7 +218,7 @@ _to do_
 
 _deprecated - see get_workspace_info_
 
-### get_workspace_info *workspaceIdentity*
+### get_workspace_info
 
 Get information associated with a workspace.
 
@@ -224,7 +228,8 @@ Note: You might find it convenient to use the ```workspaceInfoToObject``` method
 
 #### arguments
 
-- workspaceId {WorkspaceIdentity} : the identity of the workspace to get information about
+workspaceId {[WorkspaceIdentity](#WorkspaceIdentity)}
+: the identity of the workspace to get information about
 
 #### returns
 
