@@ -6,6 +6,9 @@ define(["jquery", "bluebird"], function ($, Promise) {
 
 function Workspace(url, auth, auth_cb) {
 
+    if (typeof url !== 'string') {
+        throw new Error('Service url was not provided');
+    }
     this.url = url;
     var _url = url;
     var deprecationWarningSent = false;
@@ -21,9 +24,7 @@ function Workspace(url, auth, auth_cb) {
         }
     }
 
-    if (typeof(_url) !== "string" || _url.length === 0) {
-        _url = "https://kbase.us/services/ws/";
-    }
+    
     var _auth = auth ? auth : { 'token' : '', 'user_id' : ''};
     var _auth_cb = auth_cb;
 

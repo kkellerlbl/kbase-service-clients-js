@@ -7,6 +7,9 @@ define(["jquery", "bluebird"], function ($, Promise) {
 function Catalog(url, auth, auth_cb, timeout, async_job_check_time_ms) {
     var self = this;
 
+    if (typeof url !== 'string') {
+        throw new Error('Service url was not provided');
+    }
     this.url = url;
     var _url = url;
 

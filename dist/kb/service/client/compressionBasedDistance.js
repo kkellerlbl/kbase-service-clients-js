@@ -6,6 +6,9 @@ define(["jquery", "bluebird"], function ($, Promise) {
 
 function CompressionBasedDistance(url, auth, auth_cb) {
 
+    if (typeof url !== 'string') {
+        throw new Error('Service url was not provided');
+    }
     this.url = url;
     var _url = url;
     var deprecationWarningSent = false;
