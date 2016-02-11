@@ -20,6 +20,9 @@ module.exports = function (grunt) {
      function serviceCall() {
      return Promise.resolve(json_call_ajax.apply(arguments));
      }
+    if (typeof(_url) !== "string" || _url.length === 0) {
+        _url = "https://kbase.us/services/trees";
+    }
      */
     function fixLib(content) {
         var lintDecls = '/*global define */\n/*jslint white:true */',
@@ -27,9 +30,16 @@ module.exports = function (grunt) {
             namespace = content.match(namespaceRe)[1],
             requireJsStart = 'define(["jquery", "bluebird"], function ($, Promise) {\n"use strict";',
             requireJsEnd = 'return ' + namespace + ';\n});',
-            repairedContent = content.replace(/return promise;/, 'return Promise.resolve(promise);')
-            .replace(/([^=!])==([^=])/g, '$1===$2')
-            .replace(/!=([^=])/g, '!==$1');
+            // remove the default setting of the url.
+            defaultUrlRe = /if \(typeof\(_url\)[\s\S]+?\}/,
+            urlParamSet = /this\.url = url;/,
+            urlParamValidateAndSet = 'if (typeof url !== \'string\') {\n        throw new Error(\'Service url was not provided\');\n    }\n    this\.url = url;',
+            repairedContent = content
+                .replace(/return promise;/, 'return Promise.resolve(promise);')
+                .replace(defaultUrlRe, '')
+                .replace(urlParamSet, urlParamValidateAndSet)
+                .replace(/([^=!])==([^=])/g, '$1===$2')
+                .replace(/!=([^=])/g, '!==$1');
 
         return [lintDecls, requireJsStart, repairedContent, requireJsEnd].join('\n');
     }
@@ -73,7 +83,12 @@ module.exports = function (grunt) {
                 ],
                 options: {
                     process: function (content) {
-                        return fixLib(content);
+                        try {
+                            return fixLib(content);
+                        } catch (ex) {
+                            console.error(ex);
+                            throw ex;
+                        }
                     }
                 }
             },
