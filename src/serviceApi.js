@@ -19,7 +19,7 @@ define([
                 narrativeMethodStoreClient = new NarrativeMethodStore(runtime.getConfig('services.narrative_method_store.url'), {
                     token: runtime.getService('session').getAuthToken()
                 });
-            function isValidNarrative (workspaceObject) {
+            function isValidNarrative(workspaceObject) {
                 if (workspaceObject.metadata.narrative &&
                     // corrupt workspaces may have narrative set to something other than the object id of the narrative
                     /^\d+$/.test(workspaceObject.metadata.narrative) &&
@@ -31,6 +31,35 @@ define([
             }
             function applyNarrativeFilter(ws, filter) {
                 return true;
+            }
+            function parseMethodId(id) {
+                var parts = id.split(/\//).filter(function (part) {
+                    if (part.length > 0) {
+                        return true;
+                    }
+                }), method;
+                if (parts.length === 1) {
+                    // legacy method
+                    method = {
+                        id: parts[0]
+                    };
+                } else if (parts.length === 3) {
+                    method = {
+                        module: parts[0],
+                        id: parts[1],
+                        commitHash: parts[2]
+                    };
+                } else if (parts.length === 2) {
+                    method = {
+                        module: parts[0],
+                        id: parts[1]
+                    };
+                } else {
+                    console.error('ERROR');
+                    console.error('parts');
+                    throw new Error('Invalid method metadata');
+                }
+                return method;
             }
             function getNarratives(cfg) {
                 // get all the narratives the user can see.
@@ -56,10 +85,10 @@ define([
 
                         // Now get the corresponding object metadata for each narrative workspace
                         return [workspaces, workspaceClient.get_object_info_new({
-                            objects: objectRefs,
-                            ignoreErrors: 1,
-                            includeMetadata: 1
-                        })];
+                                objects: objectRefs,
+                                ignoreErrors: 1,
+                                includeMetadata: 1
+                            })];
                     })
                     .spread(function (workspaces, data) {
                         var narratives = [], i, apps, methods;
@@ -76,9 +105,9 @@ define([
                             if (object.typeName !== 'Narrative') {
                                 continue;
                             }
-                            
+
                             if (object.metadata) {
-                            
+
                                 // Convert some narrative-specific metadata properties.
                                 if (object.metadata.job_info) {
                                     object.metadata.jobInfo = JSON.parse(object.metadata.job_info);
@@ -86,10 +115,10 @@ define([
                                 if (object.metadata.methods) {
                                     object.metadata.cellInfo = JSON.parse(object.metadata.methods);
                                 }
-                            
+
                                 apps = [];
                                 methods = [];
-                            
+
                                 /* Old narrative apps and method are stored in the cell info.
                                  * metadata: {
                                  *    methods: {
@@ -103,16 +132,16 @@ define([
                                  *       }
                                  *    }
                                  * }
-                                */
+                                 */
                                 if (object.metadata.cellInfo) {
                                     if (object.metadata.cellInfo.app) {
                                         Object.keys(object.metadata.cellInfo.app).forEach(function (key) {
-                                            apps.push(key)
+                                            apps.push(parseMethodId(key));
                                         });
                                     }
                                     if (object.metadata.cellInfo.method) {
                                         Object.keys(object.metadata.cellInfo.method).forEach(function (key) {
-                                            methods.push(key);
+                                            methods.push(parseMethodId(key));
                                         });
                                     }
                                 }
@@ -128,17 +157,20 @@ define([
                                 Object.keys(object.metadata).forEach(function (key) {
                                     var keyParts = key.split('.');
                                     switch (keyParts[0]) {
-                                        case 'app':
-                                            apps.push(keyParts[1]);
-                                            break;
-                                        case 'method': 
-                                            methods.push(keyParts[1]);
-                                            break;
+                                    case 'app':
+                                        apps.push(parseMethodId(keyParts[1]));
+                                        break;
+                                    case 'method':
+                                        var method = parseMethodId(keyParts[1]);
+                                        // methods.push(keyParts[1]);
+                                        method.source = 'new';
+                                        methods.push(method);
+                                        break;
                                     }
                                 });
                             }
-                            
-                            
+
+
                             narratives.push({
                                 workspace: workspaces[i],
                                 object: object,
@@ -149,7 +181,7 @@ define([
                         return(narratives);
                     });
             }
-            function getPermissions (narratives) {
+            function getPermissions(narratives) {
                 return Promise.try(function () {
                     if (narratives.length === 0) {
                         return [];
@@ -160,31 +192,31 @@ define([
                         });
                     }),
                         username = runtime.service('session').getUsername();
-                        return Promise.all(promises)
-                            .then(function (permissions) {
-                                for (var i = 0; i < permissions.length; i++) {
-                                    var narrative = narratives[i];
-                                    narrative.permissions = Utils.object_to_array(permissions[i], 'username', 'permission')
-                                        .filter(function (x) {
-                                            if (x.username === username ||
-                                                x.username === '*' ||
-                                                x.username === narrative.workspace.owner) {
-                                                return false;
-                                            } else {
-                                                return true;
-                                            }
-                                        })
-                                        .sort(function (a, b) {
-                                            if (a.username < b.username) {
-                                                return -1;
-                                            } else if (a.username > b.username) {
-                                                return 1;
-                                            }
-                                            return 0;
-                                        });
-                                }
-                                return(narratives);
-                            });
+                    return Promise.all(promises)
+                        .then(function (permissions) {
+                            for (var i = 0; i < permissions.length; i++) {
+                                var narrative = narratives[i];
+                                narrative.permissions = Utils.object_to_array(permissions[i], 'username', 'permission')
+                                    .filter(function (x) {
+                                        if (x.username === username ||
+                                            x.username === '*' ||
+                                            x.username === narrative.workspace.owner) {
+                                            return false;
+                                        } else {
+                                            return true;
+                                        }
+                                    })
+                                    .sort(function (a, b) {
+                                        if (a.username < b.username) {
+                                            return -1;
+                                        } else if (a.username > b.username) {
+                                            return 1;
+                                        }
+                                        return 0;
+                                    });
+                            }
+                            return narratives;
+                        });
                 });
             }
             function getApps() {
@@ -201,75 +233,75 @@ define([
                         excludeGlobal: 1
                     }
                 })
-                .then(function (narratives) {
-                    return getPermissions(narratives);
-                })
-                .then(function (narratives) {
-                    var collaborators = {}, i, perms, pass;
+                    .then(function (narratives) {
+                        return getPermissions(narratives);
+                    })
+                    .then(function (narratives) {
+                        var collaborators = {}, i, perms, pass;
 
-                    for (i = 0; i < narratives.length; i += 1) {
-                        // make sure logged in user is here
-                        // make sure subject user is here
-                        // I hate this crud, but there ain't no generic array search.
-                        perms = narratives[i].permissions;
+                        for (i = 0; i < narratives.length; i += 1) {
+                            // make sure logged in user is here
+                            // make sure subject user is here
+                            // I hate this crud, but there ain't no generic array search.
+                            perms = narratives[i].permissions;
 
-                        // make sure all users are either owner or in the permissions list.
-                        pass = true;
-                        if (_.some(users, function (user) {
-                            if (narratives[i].workspace.owner === user ||
-                                _.find(perms, function (x) {
-                                    return x.username === user;
-                                })) {
-                                return false;
-                            } else {
-                                return true;
+                            // make sure all users are either owner or in the permissions list.
+                            pass = true;
+                            if (_.some(users, function (user) {
+                                if (narratives[i].workspace.owner === user ||
+                                    _.find(perms, function (x) {
+                                        return x.username === user;
+                                    })) {
+                                    return false;
+                                } else {
+                                    return true;
+                                }
+                            })) {
+                                continue;
                             }
-                        })) {
-                            continue;
-                        }
 
-                        // Remove participants and the public user.
-                        var perms = perms.filter(function (x) {
-                            if (_.contains(users, x.username) ||
-                                x.username === '*') {
-                                return false;
+                            // Remove participants and the public user.
+                            var perms = perms.filter(function (x) {
+                                if (_.contains(users, x.username) ||
+                                    x.username === '*') {
+                                    return false;
+                                } else {
+                                    return true;
+                                }
+                            });
+
+                            // And what is left are all the users who are collaborating on this same narrative.
+                            // okay, now we have a list of all OTHER people sharing in this narrative.
+                            // All of these folks are common collaborators.
+                            perms.forEach(function (x) {
+                                Utils.incrProp(collaborators, x.username)
+                            });
+                        }
+                        var collabs = Utils.object_to_array(collaborators, 'username', 'count');
+                        var usersToFetch = collabs.map(function (x) {
+                            return x.username
+                        });
+                        return [collabs, usersToFetch, userProfileClient.get_user_profile(usersToFetch)];
+                    })
+                    .spread(function (collabs, usersToFetch, data) {
+                        var i;
+                        for (i = 0; i < data.length; i += 1) {
+                            // it is possible that a newly registered user, not even having a stub profile,
+                            // are in this list?? If so, remove that user from the network.
+                            // TODO: we need a way to report these cases -- they should not occur or be very rare.
+                            if (!data[i] || !data[i].user) {
+                                console.log('WARNING: user ' + usersToFetch[i] + ' is a sharing partner but has no profile.');
                             } else {
-                                return true;
+                                collabs[i].realname = data[i].user.realname;
                             }
-                        });
-
-                        // And what is left are all the users who are collaborating on this same narrative.
-                        // okay, now we have a list of all OTHER people sharing in this narrative.
-                        // All of these folks are common collaborators.
-                        perms.forEach(function (x) {
-                            Utils.incrProp(collaborators, x.username)
-                        });
-                    }
-                    var collabs = Utils.object_to_array(collaborators, 'username', 'count');
-                    var usersToFetch = collabs.map(function (x) {
-                        return x.username
-                    });
-                    return [collabs, usersToFetch, userProfileClient.get_user_profile(usersToFetch)];
-                })
-                .spread(function (collabs, usersToFetch, data) {
-                    var i;
-                    for (i = 0; i < data.length; i += 1) {
-                        // it is possible that a newly registered user, not even having a stub profile,
-                        // are in this list?? If so, remove that user from the network.
-                        // TODO: we need a way to report these cases -- they should not occur or be very rare.
-                        if (!data[i] || !data[i].user) {
-                            console.log('WARNING: user ' + usersToFetch[i] + ' is a sharing partner but has no profile.');
-                        } else {
-                            collabs[i].realname = data[i].user.realname;
                         }
-                    }
-                    collabs = collabs.filter(function (x) {
-                        return (x.realname ? true : false);
+                        collabs = collabs.filter(function (x) {
+                            return (x.realname ? true : false);
+                        });
+                        return collabs;
                     });
-                    return collabs;
-                });
             }
-            
+
             return {
                 getNarratives: getNarratives,
                 getCollaborators: getCollaborators,
@@ -278,7 +310,7 @@ define([
                 getMethods: getMethods
             };
         }
-        
+
         return {
             make: function (config) {
                 return factory(config);
