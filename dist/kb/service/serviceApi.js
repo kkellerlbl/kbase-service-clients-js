@@ -1,10 +1,10 @@
 define([
     'bluebird',
     'kb/common/utils',
-    'kb/service/utils',
-    'kb/service/client/workspace',
-    'kb/service/client/userProfile',
-    'kb/service/client/narrativeMethodStore'
+    './utils',
+    './client/workspace',
+    './client/userProfile',
+    './client/narrativeMethodStore'
 ],
     function (Promise, Utils, APIUtils, Workspace, UserProfile, NarrativeMethodStore) {
 
@@ -62,7 +62,7 @@ define([
                         })];
                     })
                     .spread(function (workspaces, data) {
-                        var narratives = [], i;
+                        var narratives = [], i, apps, methods;
                         for (i = 0; i < data.length; i += 1) {
                             // If one of the object ids from the workspace metadata (.narrative) did not actually
                             // result in a hit, skip it. This can occur if a narrative is corrupt -- the narrative object
@@ -74,19 +74,76 @@ define([
                             // Make sure it is a valid narrative object.
                             var object = APIUtils.object_info_to_object(data[i]);
                             if (object.typeName !== 'Narrative') {
-                                //console.log('WARNING: workspace ' + object.wsid + ' object ' + object.id + ' is not a valid Narrative object');
                                 continue;
                             }
-                            // Convert some narrative-specific metadata properties.
-                            if (object.metadata && object.metadata.job_info) {
-                                object.metadata.jobInfo = JSON.parse(object.metadata.job_info);
+                            
+                            if (object.metadata) {
+                            
+                                // Convert some narrative-specific metadata properties.
+                                if (object.metadata.job_info) {
+                                    object.metadata.jobInfo = JSON.parse(object.metadata.job_info);
+                                }
+                                if (object.metadata.methods) {
+                                    object.metadata.cellInfo = JSON.parse(object.metadata.methods);
+                                }
+                            
+                                apps = [];
+                                methods = [];
+                            
+                                /* Old narrative apps and method are stored in the cell info.
+                                 * metadata: {
+                                 *    methods: {
+                                 *       app: {
+                                 *          myapp: 1,
+                                 *          myapp2: 1
+                                 *       },
+                                 *       method: {
+                                 *          mymethod: 1,
+                                 *          mymethod2: 1
+                                 *       }
+                                 *    }
+                                 * }
+                                */
+                                if (object.metadata.cellInfo) {
+                                    if (object.metadata.cellInfo.app) {
+                                        Object.keys(object.metadata.cellInfo.app).forEach(function (key) {
+                                            apps.push(key)
+                                        });
+                                    }
+                                    if (object.metadata.cellInfo.method) {
+                                        Object.keys(object.metadata.cellInfo.method).forEach(function (key) {
+                                            methods.push(key);
+                                        });
+                                    }
+                                }
+
+                                /* New narrative metadata is stored as a flat set of
+                                 * metdata: {
+                                 *    app.myapp: 1,
+                                 *    app.myotherapp: 1,
+                                 *    method.my_method: 1,
+                                 *    method.my_other_method: 1
+                                 * }
+                                 */
+                                Object.keys(object.metadata).forEach(function (key) {
+                                    var keyParts = key.split('.');
+                                    switch (keyParts[0]) {
+                                        case 'app':
+                                            apps.push(keyParts[1]);
+                                            break;
+                                        case 'method': 
+                                            methods.push(keyParts[1]);
+                                            break;
+                                    }
+                                });
                             }
-                            if (object.metadata && object.metadata.methods) {
-                                object.metadata.cellInfo = JSON.parse(object.metadata.methods);
-                            }
+                            
+                            
                             narratives.push({
                                 workspace: workspaces[i],
-                                object: object
+                                object: object,
+                                apps: apps,
+                                methods: methods
                             });
                         }
                         return(narratives);
