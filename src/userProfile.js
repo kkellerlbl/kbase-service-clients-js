@@ -44,7 +44,7 @@ define([
                             this.userRecord = null;
                             return this;
                         }
-                        return Promise.resolve(this.userProfileClient.get_user_profile([this.username]))
+                        return this.userProfileClient.get_user_profile([this.username])
                             .then(function (data) {
                                 if (data[0]) {
                                     // profile found
@@ -66,16 +66,16 @@ define([
                 value: function () {
                     this.userRecord.profile.userdata = null;
                     this.userRecord.profile.metadata.modified = (new Date()).toISOString();
-                    return Promise.resolve(this.userProfileClient.set_user_profile({
+                    return this.userProfileClient.set_user_profile({
                         profile: this.userRecord
-                    }));
+                    });
                 }
             },
             saveProfile: {
                 value: function () {
-                    return Promise.resolve(this.userProfileClient.set_user_profile({
+                    return this.userProfileClient.set_user_profile({
                         profile: this.userRecord
-                    }));
+                    });
                 }
             },
             /*
@@ -129,77 +129,60 @@ define([
             },
             createProfile: {
                 value: function () {
-                    return Promise.try(function () {
-                        var that = this;
-                        return Promise.resolve(that.userProfileClient.lookup_globus_user([that.username]))
-                            .then(function (data) {
-                                if (!data || !data[that.username]) {
-                                    throw new Error('No user account found for ' + that.username);
-                                }
-                                return data[that.username];
-                            })
-                            .then(function (userData) {
-                                // account data has been set ... copy the account fields to the corresponding user and profile fields.
-                                that.userRecord = that.makeProfile({
-                                    username: userData.userName,
-                                    realname: userData.fullName,
-                                    email: userData.email,
-                                    account: userData,
-                                    createdBy: 'user'
-                                });
-                                return that.userProfileClient.set_user_profile({
-                                    profile: that.userRecord
-                                });
-                            })
-                            .then(function () {
-                                return that;
-                            })
-                            .catch(function (err) {
-                                console.log('ERROR SAVING USER PROFILE: ' + err);
-                                console.log(err);
-                                throw err;
+                    var that = this;
+                    return that.userProfileClient.lookup_globus_user([that.username])
+                        .then(function (data) {
+                            if (!data || !data[that.username]) {
+                                throw new Error('No user account found for ' + that.username);
+                            }
+                            return data[that.username];
+                        })
+                        .then(function (userData) {
+                            // account data has been set ... copy the account fields to the corresponding user and profile fields.
+                            that.userRecord = that.makeProfile({
+                                username: userData.userName,
+                                realname: userData.fullName,
+                                email: userData.email,
+                                account: userData,
+                                createdBy: 'user'
                             });
-                    });
+                            return that.userProfileClient.set_user_profile({
+                                profile: that.userRecord
+                            });
+                        })
+                        .then(function () {
+                            return that;
+                        })
+                        .catch(function (err) {
+                            console.error('ERROR SAVING USER PROFILE: ' + err);
+                            console.error(err);
+                            throw err;
+                        });
                 }
             },
             createStubProfile: {
                 value: function (options) {
-                    return new Promise(function (resolve, reject) {
-                        Promise.resolve(this.userProfileClient.lookup_globus_user([this.username]))
-                            .then(function (data) {
+                    return this.userProfileClient.lookup_globus_user([this.username])
+                        .then(function (data) {
+                            if (!data || !data[this.username]) {
+                                reject('No user account found for ' + this.username);
+                                return;
+                            }
 
-                                if (!data || !data[this.username]) {
-                                    reject('No user account found for ' + this.username);
-                                    return;
-                                }
+                            var userData = data[this.username];
 
-                                var userData = data[this.username];
-
-                                // account data has been set ... copy the account fields to the corresponding user and profile fields.
-                                this.userRecord = this.makeStubProfile({
-                                    username: userData.userName,
-                                    realname: userData.fullName,
-                                    account: userData,
-                                    createdBy: options.createdBy
-                                });
-
-                                Promise.resolve(this.userProfileClient.set_user_profile({
-                                    profile: this.userRecord
-                                }))
-                                    .then(function () {
-                                        resolve(this);
-                                    }.bind(this))
-                                    .catch(function (err) {
-                                        console.log('ERROR SAVING USER PROFILE: ' + err);
-                                        console.log(err);
-                                        reject(err);
-                                    });
-
-                            }.bind(this))
-                            .catch(function (err) {
-                                reject(err);
+                            // account data has been set ... copy the account fields to the corresponding user and profile fields.
+                            this.userRecord = this.makeStubProfile({
+                                username: userData.userName,
+                                realname: userData.fullName,
+                                account: userData,
+                                createdBy: options.createdBy
                             });
-                    }.bind(this));
+
+                            return this.userProfileClient.set_user_profile({
+                                profile: this.userRecord
+                            });
+                        }.bind(this));
                 }
             },
             makeStubProfile: {
