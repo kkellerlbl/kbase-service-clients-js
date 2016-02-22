@@ -165,7 +165,7 @@ define([
                     return this.userProfileClient.lookup_globus_user([this.username])
                         .then(function (data) {
                             if (!data || !data[this.username]) {
-                                reject('No user account found for ' + this.username);
+                                throw new Error('No user account found for ' + this.username);
                                 return;
                             }
 
@@ -181,7 +181,7 @@ define([
 
                             return this.userProfileClient.set_user_profile({
                                 profile: this.userRecord
-                            });
+                            })
                         }.bind(this));
                 }
             },

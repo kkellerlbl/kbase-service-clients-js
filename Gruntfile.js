@@ -34,12 +34,36 @@ module.exports = function (grunt) {
             defaultUrlRe = /if \(typeof\(_url\)[\s\S]+?\}/,
             urlParamSet = /this\.url = url;/,
             urlParamValidateAndSet = 'if (typeof url !== \'string\') {\n        throw new Error(\'Service url was not provided\');\n    }\n    this\.url = url;',
-            repairedContent = content
+            repairedContent = content                
                 .replace(/return promise;/, 'return Promise.resolve(promise);')
                 .replace(defaultUrlRe, '')
                 .replace(urlParamSet, urlParamValidateAndSet)
                 .replace(/([^=!])==([^=])/g, '$1===$2')
                 .replace(/!=([^=])/g, '!==$1');
+
+        return [lintDecls, requireJsStart, repairedContent, requireJsEnd].join('\n');
+    }
+    
+    function fixLibCompliant(content) {
+        var lintDecls = '/*global define */\n/*jslint white:true */',
+            namespaceRe = /^function (.+?)\(/m,
+            namespace = content.match(namespaceRe)[1],
+            requireJsStart = 'define(["jquery", "bluebird"], function ($, Promise) {\n"use strict";',
+            requireJsEnd = 'return ' + namespace + ';\n});',
+            // remove the default setting of the url.
+            defaultUrlRe = /if \(typeof\(_url\)[\s\S]+?\}/,
+            urlParamSet = /this\.url = url;/,
+            urlParamValidateAndSet = 'if (typeof url !== \'string\') {\n        throw new Error(\'Service url was not provided\');\n    }\n    this\.url = url;',
+            // add the correct content type
+            contentTypeInsertionPont = /(processData: false,)/,
+            contentTypeReplacement = '$1\n            contentType: "application/json-rpc",',
+            repairedContent = content                
+                .replace(/return promise;/, 'return Promise.resolve(promise);')
+                .replace(defaultUrlRe, '')
+                .replace(urlParamSet, urlParamValidateAndSet)
+                .replace(/([^=!])==([^=])/g, '$1===$2')
+                .replace(/!=([^=])/g, '!==$1')
+                .replace(contentTypeInsertionPont, contentTypeReplacement);
 
         return [lintDecls, requireJsStart, repairedContent, requireJsEnd].join('\n');
     }
@@ -70,7 +94,8 @@ module.exports = function (grunt) {
                 files: [
                     {
                         cwd: 'src/kbase-clients/js_clients',
-                        src: '*.js',
+                        // src: ['*.js', '!userProfile.js'],
+                        src: ['*.js'],
                         dest: 'dist/kb/service/client',
                         expand: true,
                         filter: function (file) {
@@ -92,6 +117,32 @@ module.exports = function (grunt) {
                     }
                 }
             },
+//            fixLibCompliant: {
+//                files: [
+//                    {
+//                        cwd: 'src/kbase-clients/js_clients',
+//                        src: ['userProfile.js'],
+//                        dest: 'dist/kb/service/client',
+//                        expand: true,
+//                        filter: function (file) {
+//                            if (file.match(/shock\.js$/)) {
+//                                return false;
+//                            }
+//                            return true;
+//                        }
+//                    }
+//                ],
+//                options: {
+//                    process: function (content) {
+//                        try {
+//                            return fixLibCompliant(content);
+//                        } catch (ex) {
+//                            console.error(ex);
+//                            throw ex;
+//                        }
+//                    }
+//                }
+//            },
             fixLibPLugin: {
                 files: [
                     {
