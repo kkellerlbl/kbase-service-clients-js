@@ -125,8 +125,6 @@ function UserProfile(url, auth, auth_cb) {
             dataType: "text",
             type: 'POST',
             processData: false,
-            // This is what it should be!
-            // contentType: "application/json-rpc",
             data: JSON.stringify(rpc),
             beforeSend: beforeSend,
             success: function (data, status, xhr) {
