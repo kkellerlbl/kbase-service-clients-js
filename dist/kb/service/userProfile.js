@@ -181,7 +181,7 @@ define([
 
                             return this.userProfileClient.set_user_profile({
                                 profile: this.userRecord
-                            })
+                            });
                         }.bind(this));
                 }
             },

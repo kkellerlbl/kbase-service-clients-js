@@ -4,7 +4,7 @@ define(["jquery", "bluebird"], function ($, Promise) {
 "use strict";
 
 
-function Catalog(url, auth, auth_cb, timeout, async_job_check_time_ms) {
+function Catalog(url, auth, auth_cb, timeout, async_job_check_time_ms, async_version) {
     var self = this;
 
     if (typeof url !== 'string') {
@@ -19,6 +19,7 @@ function Catalog(url, auth, auth_cb, timeout, async_job_check_time_ms) {
     this.async_job_check_time_ms = async_job_check_time_ms;
     if (!this.async_job_check_time_ms)
         this.async_job_check_time_ms = 5000;
+    this.async_version = async_version;
 
     var _auth = auth ? auth : { 'token' : '', 'user_id' : ''};
     var _auth_cb = auth_cb;
@@ -421,6 +422,19 @@ function Catalog(url, auth, auth_cb, timeout, async_job_check_time_ms) {
             [params], 1, _callback, _errorCallback);
     };
  
+     this.get_exec_aggr_table = function (params, _callback, _errorCallback) {
+        if (typeof params === 'function')
+            throw 'Argument params can not be a function';
+        if (_callback && typeof _callback !== 'function')
+            throw 'Argument _callback must be a function if defined';
+        if (_errorCallback && typeof _errorCallback !== 'function')
+            throw 'Argument _errorCallback must be a function if defined';
+        if (typeof arguments === 'function' && arguments.length > 1+2)
+            throw 'Too many arguments ('+arguments.length+' instead of '+(1+2)+')';
+        return json_call_ajax("Catalog.get_exec_aggr_table",
+            [params], 1, _callback, _errorCallback);
+    };
+ 
      this.set_client_group = function (group, _callback, _errorCallback) {
         if (typeof group === 'function')
             throw 'Argument group can not be a function';
@@ -464,7 +478,7 @@ function Catalog(url, auth, auth_cb, timeout, async_job_check_time_ms) {
     /*
      * JSON call using jQuery method.
      */
-    function json_call_ajax(method, params, numRets, callback, errorCallback) {
+    function json_call_ajax(method, params, numRets, callback, errorCallback, json_rpc_context) {
         var deferred = $.Deferred();
 
         if (typeof callback === 'function') {
@@ -481,6 +495,8 @@ function Catalog(url, auth, auth_cb, timeout, async_job_check_time_ms) {
             version: "1.1",
             id: String(Math.random()).slice(2),
         };
+        if (json_rpc_context)
+            rpc['context'] = json_rpc_context;
 
         var beforeSend = null;
         var token = (_auth_cb && typeof _auth_cb === 'function') ? _auth_cb()
