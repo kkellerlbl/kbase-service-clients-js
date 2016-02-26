@@ -186,14 +186,17 @@ define([
                     if (narratives.length === 0) {
                         return [];
                     }
-                    var promises = narratives.map(function (narrative) {
-                        return workspaceClient.get_permissions({
+                    var permParams = narratives.map(function (narrative) {
+                        return {
                             id: narrative.workspace.id
-                        });
+                        };
                     }),
                         username = runtime.service('session').getUsername();
-                    return Promise.all(promises)
-                        .then(function (permissions) {
+                    return workspaceClient.get_permissions_mass({
+                        workspaces: permParams
+                    })
+                        .then(function (result) {
+                            var permissions = result.perms;
                             for (var i = 0; i < permissions.length; i++) {
                                 var narrative = narratives[i];
                                 narrative.permissions = Utils.object_to_array(permissions[i], 'username', 'permission')
@@ -261,7 +264,7 @@ define([
                             }
 
                             // Remove participants and the public user.
-                            var perms = perms.filter(function (x) {
+                            var filtered = perms.filter(function (x) {
                                 if (_.contains(users, x.username) ||
                                     x.username === '*') {
                                     return false;
@@ -273,7 +276,7 @@ define([
                             // And what is left are all the users who are collaborating on this same narrative.
                             // okay, now we have a list of all OTHER people sharing in this narrative.
                             // All of these folks are common collaborators.
-                            perms.forEach(function (x) {
+                            filtered.forEach(function (x) {
                                 Utils.incrProp(collaborators, x.username)
                             });
                         }
