@@ -1,14 +1,14 @@
-## KBase API clients
+# KBase API clients
 
 This directory contains all current KBase Javascript clients, as of 
-January 29, 2015.
+April 14, 2016.
 
 These are not likely to change very often, and the generation process to get 
 the whole batch is not straightforward in all cases, so they've been included 
 here.
 
-This also has a Gruntfile that will concatenate, uglify, and minify all of them
-into a single kbase-client-api.js and kbase-client-api.min.js file (instructions below).
+The clients are updated in src/kbase-clients by replacing the appropriate client file with the updated one from the home project. Before being used they must be prepared and placed into the dist directory under kb/service. 
+
 
 Here's the list of the included service client names. Except for AweClient and 
 ShockClient, which were constructed by hand, they all follow the same idiom for 
@@ -23,6 +23,7 @@ e.g.
 
 - AbstractHandle
 - AweClient
+- Catalog
 - CDMI_API
 - CDMI_EntityAPI
 - CoExpression
@@ -72,12 +73,13 @@ make it global to your system is use this line:
 This will put grunt on your system path and allow it to run from any directory.
 
 Grunt works on a plugin basis. These are included in the package.json file in
-this directory. Now, all you need to do to get the clients minified is:
+this directory. Now, all you need to do to get the clients prepared is:
 
     npm install
-    grunt
+    grunt build
 
 And you're ready to go.
 
-Of course, this is all kinda moot since the end products are also included in this
-git repo. But this is a useful thing to document.
+## TODO
+
+This document needs revision and expansion.
