@@ -7,9 +7,9 @@
  */
 define([
     'bluebird',
-    'kb/common/utils',
-    'kb/service/utils',
-    'kb/service/client/workspace'
+    'kb_common/utils',
+    './utils',
+    './client/workspace'
 ],
     function (Promise, Utils, APIUtils, Workspace) {
         'use strict';
