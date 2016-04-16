@@ -1,6 +1,6 @@
 define([
     'bluebird',
-    'kb/common/utils',
+    'kb_common/utils',
     './utils',
     './client/workspace',
     './client/userProfile',
