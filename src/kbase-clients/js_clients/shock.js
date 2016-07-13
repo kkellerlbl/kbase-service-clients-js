@@ -126,6 +126,7 @@ define([
 
         if (params.token) {
             self.token = params.token;
+            self.auth_header.Authorization = 'OAuth ' + params.token;
         }
 
         if (params.chunkSize) {
@@ -181,7 +182,7 @@ define([
 
         self.check_file = function (file) {
             var fsize = file.size,
-                ftime = file.lastModifiedDate.getTime(),
+                ftime = file.lastModifiedDate,
                 filters = {
                     file_size: fsize,
                     file_time: ftime,
@@ -225,7 +226,7 @@ define([
                         incomplete: (lastChunk ? "0" : "1"),
                         file_size: String(file.size),
                         file_name: file.name,
-                        file_time: String(file.lastModifiedDate.getTime()),
+                        file_time: String(file.lastModifiedDate),
                         chunks: String(currentChunk + 1),
                         chunk_size: String(chunkSize)
                     },
@@ -322,7 +323,7 @@ define([
                     var chunkSize = self.chunkSize;
                     var chunks = Math.ceil(file.size / chunkSize);
                     var incomplete_attr = {"incomplete": "1", "file_size": "" + file.size, "file_name": file.name,
-                        "file_time": "" + file.lastModifiedDate.getTime(), "chunk_size": "" + chunkSize};
+                        "file_time": "" + file.lastModifiedDate, "chunk_size": "" + chunkSize};
                     var aFileParts = [JSON.stringify(incomplete_attr)];
                     var oMyBlob = new Blob(aFileParts, {"type": "text\/json"});
                     var fd = new FormData();
@@ -359,7 +360,7 @@ define([
                     if (data &&
                         data.attributes.file_size === String(file.size) &&
                         data.attributes.file_name === file.name &&
-                        data.attributes.file_time === String(file.lastModifiedDate.getTime())) {
+                        data.attributes.file_time === String(file.lastModifiedDate)) {
                         processNode(data);
                     } else {
                         searchForIncomplete();
