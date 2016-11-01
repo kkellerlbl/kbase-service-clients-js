@@ -113,33 +113,42 @@ define([
             .join('&');
     }
 
+    function fileLastModifiedTime(file) {
+        if (file.lastModified) {
+            return file.lastModified;
+        }
+        if (file.lastModifiedDate) {
+            return file.lastModifiedDate.getTime();
+        }
+        console.warning('File last modified time not supported');
+        return 0;
+    }
+
     function ShockClient(params) {
-        var self = this;
-        
-        self.auth_header = {};
-        self.chunkSize = 2097152;
+        this.auth_header = {};
+        this.chunkSize = 2097152;
 
         if (params.url === undefined) {
             throw new Error('Missing parameter "url"');
         }
-        self.url = params.url;
+        this.url = params.url;
 
         if (params.token) {
-            self.token = params.token;
-            self.auth_header.Authorization = 'OAuth ' + params.token;
+            this.token = params.token;
+            this.auth_header.Authorization = 'OAuth ' + params.token;
         }
 
         if (params.chunkSize) {
-            self.chunkSize = params.chunkSize;
+            this.chunkSize = params.chunkSize;
         }
 
-        self.get_node = function (node) {
-            var url = [self.url, 'node', node].join('/');
-            return getRequest(url, self.token);
+        this.get_node = function (node) {
+            var url = [this.url, 'node', node].join('/');
+            return getRequest(url, this.token);
         };
 
-        self.get_nodes = function (options) {
-            var url = [self.url, 'node'].join('/'),
+        this.get_nodes = function (options) {
+            var url = [this.url, 'node'].join('/'),
                 query = {};
             if (options.query) {
                 query = options.query;
@@ -158,31 +167,31 @@ define([
                 query.offset = options.offset;
             }
             url += '?' + encodeQuery(query);
-            return getRequest(url, self.token);
+            return getRequest(url, this.token);
         };
 
-        self.get_node_acls = function (id) {
-            var url = [self.url, 'node', id, "acl"].join('/');
-            return getRequest(url, self.token);
+        this.get_node_acls = function (id) {
+            var url = [this.url, 'node', id, "acl"].join('/');
+            return getRequest(url, this.token);
         };
 
-        self.delete_node = function (id) {
-            var url = [self.url, 'node', id].join('/');
-            return deleteRequest(url, self.token);
+        this.delete_node = function (id) {
+            var url = [this.url, 'node', id].join('/');
+            return deleteRequest(url, this.token);
         };
 
-        self.update_node = function (node, attr) {
-            var url = [self.url, 'node'].join('/'),
+        this.update_node = function (node, attr) {
+            var url = [this.url, 'node'].join('/'),
                 aFileParts = [JSON.stringify(attr)],
                 oMyBlob = new Blob(aFileParts, {"type": "text\/json"}),
                 fd = new FormData();
             fd.append('attributes', oMyBlob);
-            return putRequest(url, self.token, fd);
+            return putRequest(url, this.token, fd);
         };
 
-        self.check_file = function (file) {
+        this.check_file = function (file) {
             var fsize = file.size,
-                ftime = file.lastModifiedDate,
+                ftime = fileLastModifiedTime(file),
                 filters = {
                     file_size: fsize,
                     file_time: ftime,
@@ -190,7 +199,7 @@ define([
                     limit: 1
                 };
 
-            return self.get_nodes(filters)
+            return this.get_nodes(filters)
                 .then(function (data) {
                     if (data.length === 0) {
                         return null;
@@ -202,18 +211,19 @@ define([
         /**
          * Changes file.name prop indide shock node. Use this func at the end of chunk upload.
          */
-        self.change_node_file_name = function (shockNodeId, fileName, ret, errorCallback) {
-            var url = [self.url, 'node', shockNodeId].join('/'),
+        this.change_node_file_name = function (shockNodeId, fileName, ret, errorCallback) {
+            var url = [this.url, 'node', shockNodeId].join('/'),
                 fd = new FormData();
             fd.append('file_name', fileName);
             return putRequest(url, this.token, fd);
         };
 
-        self.loadNext = function (file, url, promise, currentChunk, chunks, incompleteId, chunkSize, ret, errorCallback, cancelCallback) {
+        this.loadNext = function (file, url, promise, currentChunk, chunks, incompleteId, chunkSize, ret, errorCallback, cancelCallback) {
             if (cancelCallback && cancelCallback()) {
                 return;
             }
             var fileReader = new FileReader();
+            var self = this;
             fileReader.onload = function (e) {
                 if (cancelCallback && cancelCallback()) {
                     return;
@@ -226,7 +236,7 @@ define([
                         incomplete: (lastChunk ? "0" : "1"),
                         file_size: String(file.size),
                         file_name: file.name,
-                        file_time: String(file.lastModifiedDate),
+                        file_time: String(fileLastModifiedTime(file)),
                         chunks: String(currentChunk + 1),
                         chunk_size: String(chunkSize)
                     },
@@ -282,9 +292,10 @@ define([
          * for showing progress info in UI. Parameter "shockNodeId" is optional but if you know it
          * you can resume faster.
          */
-        self.upload_node = function (file, shockNodeId, searchToResume, ret, errorCallback, cancelCallback) {
-            var url = self.url + '/node',
-                promise = $.Deferred();
+        this.upload_node = function (file, shockNodeId, searchToResume, ret, errorCallback, cancelCallback) {
+            var url = this.url + '/node',
+                promise = $.Deferred(),
+                self = this;
             // if this is a chunked upload, check if it needs to be resumed
 
             function searchForIncomplete() {
@@ -323,13 +334,13 @@ define([
                     var chunkSize = self.chunkSize;
                     var chunks = Math.ceil(file.size / chunkSize);
                     var incomplete_attr = {"incomplete": "1", "file_size": "" + file.size, "file_name": file.name,
-                        "file_time": "" + file.lastModifiedDate, "chunk_size": "" + chunkSize};
+                        "file_time": "" + fileLastModifiedTime(file), "chunk_size": "" + chunkSize};
                     var aFileParts = [JSON.stringify(incomplete_attr)];
                     var oMyBlob = new Blob(aFileParts, {"type": "text\/json"});
                     var fd = new FormData();
                     fd.append('attributes', oMyBlob);
                     fd.append('parts', chunks);
-                    jQuery.ajax(url, {
+                    $.ajax(url, {
                         contentType: false,
                         processData: false,
                         data: fd,
@@ -354,18 +365,20 @@ define([
             }
 
             if (shockNodeId) {
-                self.get_node(shockNodeId, function (data) {
+                self.get_node(shockNodeId)
+                .then(function (data) {
                     if (cancelCallback && cancelCallback())
                         return;
                     if (data &&
                         data.attributes.file_size === String(file.size) &&
                         data.attributes.file_name === file.name &&
-                        data.attributes.file_time === String(file.lastModifiedDate)) {
+                        data.attributes.file_time === String(fileLastModifiedTime(file))) {
                         processNode(data);
                     } else {
                         searchForIncomplete();
                     }
-                }, function (error) {
+                })
+                .catch(function (error) {
                     searchForIncomplete();
                 });
             } else {

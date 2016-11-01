@@ -96,7 +96,7 @@ module.exports = function (grunt) {
                         cwd: 'src/kbase-clients/js_clients',
                         // src: ['*.js', '!userProfile.js'],
                         src: ['*.js'],
-                        dest: 'dist/kb/service/client',
+                        dest: 'dist/kb_service/client',
                         expand: true,
                         filter: function (file) {
                             if (file.match(/shock\.js$/)) {
@@ -163,7 +163,7 @@ module.exports = function (grunt) {
                     {
                         cwd: 'src/kbase-clients/js_clients',
                         src: 'shock.js',
-                        dest: 'dist/kb/service/client',
+                        dest: 'dist/kb_service/client',
                         expand: true,
                     }
                 ]
@@ -173,7 +173,7 @@ module.exports = function (grunt) {
                     {
                         cwd: 'src',
                         src: '*.js',
-                        dest: 'dist/kb/service',
+                        dest: 'dist/kb_service',
                         expand: true
                     }
                 ]
