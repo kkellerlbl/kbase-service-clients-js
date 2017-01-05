@@ -17,6 +17,7 @@
         "type": "git",
         "url": "git://github.com/kbase/kbase-service-clients-js"
     },
+    "main": "dist/**/*",
     "dependencies": {
         "jquery": "^2.1.0",
         "bluebird": "^3.0.0",
