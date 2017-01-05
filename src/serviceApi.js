@@ -91,7 +91,7 @@ define([
                             })];
                     })
                     .spread(function (workspaces, data) {
-                        var narratives = [], i, apps, methods;
+                        var narratives = [], i, apps, methods, cellTypes = {appCell: 0, markdown: 0, code: 0}
                         for (i = 0; i < data.length; i += 1) {
                             // If one of the object ids from the workspace metadata (.narrative) did not actually
                             // result in a hit, skip it. This can occur if a narrative is corrupt -- the narrative object
@@ -153,19 +153,30 @@ define([
                                  *    method.my_method: 1,
                                  *    method.my_other_method: 1
                                  * }
+                                 * Note that cell jupyter cell types are stored as 
+                                 * jupyter.markdown: "n" and
+                                 * jupyter.code: "n"
+                                 * The "." is, confusingly, actually a dot in the key has
+                                 * for the app and method keys.
+                                 * 
                                  */
                                 Object.keys(object.metadata).forEach(function (key) {
                                     var keyParts = key.split('.');
                                     switch (keyParts[0]) {
                                     case 'app':
                                         apps.push(parseMethodId(keyParts[1]));
+                                        cellTypes['app'] += 1;
                                         break;
                                     case 'method':
                                         var method = parseMethodId(keyParts[1]);
                                         // methods.push(keyParts[1]);
                                         method.source = 'new';
                                         methods.push(method);
+                                        cellTypes['app'] += 1;
                                         break;
+                                    case 'jupyter':
+                                        var cellType = keyParts[1];
+                                        cellTypes[cellType] += parseInt(object.metadata[key]);
                                     }
                                 });
                             }
@@ -175,7 +186,8 @@ define([
                                 workspace: workspaces[i],
                                 object: object,
                                 apps: apps,
-                                methods: methods
+                                methods: methods,
+                                cellTypes: cellTypes
                             });
                         }
                         return(narratives);
