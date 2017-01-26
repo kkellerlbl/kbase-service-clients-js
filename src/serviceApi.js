@@ -91,19 +91,22 @@ define([
                             })];
                     })
                     .spread(function (workspaces, data) {
-                        var narratives = [], i, apps, methods;
-                        for (i = 0; i < data.length; i += 1) {
+                        var narratives = [];
+                        data.forEach(function (objectInfo, index) {
                             // If one of the object ids from the workspace metadata (.narrative) did not actually
                             // result in a hit, skip it. This can occur if a narrative is corrupt -- the narrative object
                             // was deleted or replaced and the workspace metadata not updated.
-                            if (!data[i]) {
+                            if (!objectInfo) {
                                 //console.log('WARNING: workspace ' + object.wsid + ' does not contain a matching narrative object');
-                                continue;
+                                return;
                             }
+                            var cellTypes = {app: 0, markdown: 0, code: 0};
+                            var apps = [];
+                            var methods = [];
                             // Make sure it is a valid narrative object.
-                            var object = APIUtils.object_info_to_object(data[i]);
+                            var object = APIUtils.object_info_to_object(objectInfo);
                             if (object.typeName !== 'Narrative') {
-                                continue;
+                                return;
                             }
 
                             if (object.metadata) {
@@ -115,9 +118,6 @@ define([
                                 if (object.metadata.methods) {
                                     object.metadata.cellInfo = JSON.parse(object.metadata.methods);
                                 }
-
-                                apps = [];
-                                methods = [];
 
                                 /* Old narrative apps and method are stored in the cell info.
                                  * metadata: {
@@ -153,32 +153,56 @@ define([
                                  *    method.my_method: 1,
                                  *    method.my_other_method: 1
                                  * }
+                                 * Note that cell jupyter cell types are stored as 
+                                 * jupyter.markdown: "n" and
+                                 * jupyter.code: "n"
+                                 * The "." is, confusingly, actually a dot in the key has
+                                 * for the app and method keys.
+                                 * 
                                  */
                                 Object.keys(object.metadata).forEach(function (key) {
                                     var keyParts = key.split('.');
                                     switch (keyParts[0]) {
-                                    case 'app':
-                                        apps.push(parseMethodId(keyParts[1]));
-                                        break;
                                     case 'method':
-                                        var method = parseMethodId(keyParts[1]);
-                                        // methods.push(keyParts[1]);
-                                        method.source = 'new';
-                                        methods.push(method);
+                                        // New style app cells have the metadata prefix set to 
+                                        // "method." !!
+                                        apps.push(parseMethodId(keyParts[1]));
+                                        cellTypes['app'] += 1;
                                         break;
-                                    }
+                                    case 'app':
+                                        // Old style kbase (markdown-app) cells used "app." as the
+                                        // metadata key prefix. We just treat them as regular apps
+                                        // now.
+                                        apps.push(parseMethodId(keyParts[1]));
+                                        cellTypes['app'] += 1;
+                                        break;
+                                    // case 'method':
+                                    //     var method = parseMethodId(keyParts[1]);
+                                    //     // methods.push(keyParts[1]);
+                                    //     method.source = 'new';
+                                    //     methods.push(method);
+                                    //     cellTypes['app'] += 1;
+                                    //     break;
+                                    case 'ipython':
+                                    case 'jupyter':
+                                        var cellType = keyParts[1];
+                                        cellTypes[cellType] += parseInt(object.metadata[key]);
+                                        break;
+                                    default:
+                                        // console.log('REALLY?', object.metadata);
+                                    }                                
                                 });
                             }
 
-
                             narratives.push({
-                                workspace: workspaces[i],
+                                workspace: workspaces[index],
                                 object: object,
                                 apps: apps,
-                                methods: methods
+                                methods: methods,
+                                cellTypes: cellTypes
                             });
-                        }
-                        return(narratives);
+                        });
+                        return narratives;
                     });
             }
             function getPermissions(narratives) {
