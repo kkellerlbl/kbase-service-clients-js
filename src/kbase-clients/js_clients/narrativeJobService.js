@@ -1,105 +1,201 @@
 
 
-function NarrativeJobService(url, auth, auth_cb) {
+function NarrativeJobService(url, auth, auth_cb, timeout, async_job_check_time_ms, service_version) {
+    var self = this;
 
     this.url = url;
     var _url = url;
-    var deprecationWarningSent = false;
 
-    function deprecationWarning() {
-        if (!deprecationWarningSent) {
-            deprecationWarningSent = true;
-            if (!window.console) return;
-            console.log(
-                "DEPRECATION WARNING: '*_async' method names will be removed",
-                "in a future version. Please use the identical methods without",
-                "the'_async' suffix.");
-        }
-    }
+    this.timeout = timeout;
+    var _timeout = timeout;
+
+    this.async_job_check_time_ms = async_job_check_time_ms;
+    if (!this.async_job_check_time_ms)
+        this.async_job_check_time_ms = 100;
+    this.async_job_check_time_scale_percent = 150;
+    this.async_job_check_max_time_ms = 300000;  // 5 minutes
+    this.service_version = service_version;
 
     if (typeof(_url) != "string" || _url.length == 0) {
-        _url = "http://localhost:7080";
+        _url = "https://kbase.us/services/njs_wrapper/";
     }
     var _auth = auth ? auth : { 'token' : '', 'user_id' : ''};
     var _auth_cb = auth_cb;
 
-
-    this.run_app = function (app, _callback, _errorCallback) {
-    return json_call_ajax("NarrativeJobService.run_app",
-        [app], 1, _callback, _errorCallback);
-};
-
-    this.run_app_async = function (app, _callback, _error_callback) {
-        deprecationWarning();
-        return json_call_ajax("NarrativeJobService.run_app", [app], 1, _callback, _error_callback);
+     this.list_config = function (_callback, _errorCallback) {
+        if (_callback && typeof _callback !== 'function')
+            throw 'Argument _callback must be a function if defined';
+        if (_errorCallback && typeof _errorCallback !== 'function')
+            throw 'Argument _errorCallback must be a function if defined';
+        if (typeof arguments === 'function' && arguments.length > 0+2)
+            throw 'Too many arguments ('+arguments.length+' instead of '+(0+2)+')';
+        return json_call_ajax(_url, "NarrativeJobService.list_config",
+            [], 1, _callback, _errorCallback);
     };
 
-    this.compose_app = function (app, _callback, _errorCallback) {
-    return json_call_ajax("NarrativeJobService.compose_app",
-        [app], 1, _callback, _errorCallback);
-};
-
-    this.compose_app_async = function (app, _callback, _error_callback) {
-        deprecationWarning();
-        return json_call_ajax("NarrativeJobService.compose_app", [app], 1, _callback, _error_callback);
+     this.ver = function (_callback, _errorCallback) {
+        if (_callback && typeof _callback !== 'function')
+            throw 'Argument _callback must be a function if defined';
+        if (_errorCallback && typeof _errorCallback !== 'function')
+            throw 'Argument _errorCallback must be a function if defined';
+        if (typeof arguments === 'function' && arguments.length > 0+2)
+            throw 'Too many arguments ('+arguments.length+' instead of '+(0+2)+')';
+        return json_call_ajax(_url, "NarrativeJobService.ver",
+            [], 1, _callback, _errorCallback);
     };
 
-    this.check_app_state = function (job_id, _callback, _errorCallback) {
-    return json_call_ajax("NarrativeJobService.check_app_state",
-        [job_id], 1, _callback, _errorCallback);
-};
-
-    this.check_app_state_async = function (job_id, _callback, _error_callback) {
-        deprecationWarning();
-        return json_call_ajax("NarrativeJobService.check_app_state", [job_id], 1, _callback, _error_callback);
+     this.status = function (_callback, _errorCallback) {
+        if (_callback && typeof _callback !== 'function')
+            throw 'Argument _callback must be a function if defined';
+        if (_errorCallback && typeof _errorCallback !== 'function')
+            throw 'Argument _errorCallback must be a function if defined';
+        if (typeof arguments === 'function' && arguments.length > 0+2)
+            throw 'Too many arguments ('+arguments.length+' instead of '+(0+2)+')';
+        return json_call_ajax(_url, "NarrativeJobService.status",
+            [], 1, _callback, _errorCallback);
     };
 
-    this.suspend_app = function (job_id, _callback, _errorCallback) {
-    return json_call_ajax("NarrativeJobService.suspend_app",
-        [job_id], 1, _callback, _errorCallback);
-};
-
-    this.suspend_app_async = function (job_id, _callback, _error_callback) {
-        deprecationWarning();
-        return json_call_ajax("NarrativeJobService.suspend_app", [job_id], 1, _callback, _error_callback);
+     this.run_job = function (params, _callback, _errorCallback) {
+        if (typeof params === 'function')
+            throw 'Argument params can not be a function';
+        if (_callback && typeof _callback !== 'function')
+            throw 'Argument _callback must be a function if defined';
+        if (_errorCallback && typeof _errorCallback !== 'function')
+            throw 'Argument _errorCallback must be a function if defined';
+        if (typeof arguments === 'function' && arguments.length > 1+2)
+            throw 'Too many arguments ('+arguments.length+' instead of '+(1+2)+')';
+        return json_call_ajax(_url, "NarrativeJobService.run_job",
+            [params], 1, _callback, _errorCallback);
     };
 
-    this.resume_app = function (job_id, _callback, _errorCallback) {
-    return json_call_ajax("NarrativeJobService.resume_app",
-        [job_id], 1, _callback, _errorCallback);
-};
-
-    this.resume_app_async = function (job_id, _callback, _error_callback) {
-        deprecationWarning();
-        return json_call_ajax("NarrativeJobService.resume_app", [job_id], 1, _callback, _error_callback);
+     this.get_job_params = function (job_id, _callback, _errorCallback) {
+        if (typeof job_id === 'function')
+            throw 'Argument job_id can not be a function';
+        if (_callback && typeof _callback !== 'function')
+            throw 'Argument _callback must be a function if defined';
+        if (_errorCallback && typeof _errorCallback !== 'function')
+            throw 'Argument _errorCallback must be a function if defined';
+        if (typeof arguments === 'function' && arguments.length > 1+2)
+            throw 'Too many arguments ('+arguments.length+' instead of '+(1+2)+')';
+        return json_call_ajax(_url, "NarrativeJobService.get_job_params",
+            [job_id], 2, _callback, _errorCallback);
     };
 
-    this.delete_app = function (job_id, _callback, _errorCallback) {
-    return json_call_ajax("NarrativeJobService.delete_app",
-        [job_id], 1, _callback, _errorCallback);
-};
-
-    this.delete_app_async = function (job_id, _callback, _error_callback) {
-        deprecationWarning();
-        return json_call_ajax("NarrativeJobService.delete_app", [job_id], 1, _callback, _error_callback);
+     this.update_job = function (params, _callback, _errorCallback) {
+        if (typeof params === 'function')
+            throw 'Argument params can not be a function';
+        if (_callback && typeof _callback !== 'function')
+            throw 'Argument _callback must be a function if defined';
+        if (_errorCallback && typeof _errorCallback !== 'function')
+            throw 'Argument _errorCallback must be a function if defined';
+        if (typeof arguments === 'function' && arguments.length > 1+2)
+            throw 'Too many arguments ('+arguments.length+' instead of '+(1+2)+')';
+        return json_call_ajax(_url, "NarrativeJobService.update_job",
+            [params], 1, _callback, _errorCallback);
     };
 
-    this.list_config = function (_callback, _errorCallback) {
-    return json_call_ajax("NarrativeJobService.list_config",
-        [], 1, _callback, _errorCallback);
-};
-
-    this.list_config_async = function (_callback, _error_callback) {
-        deprecationWarning();
-        return json_call_ajax("NarrativeJobService.list_config", [], 1, _callback, _error_callback);
+     this.add_job_logs = function (job_id, lines, _callback, _errorCallback) {
+        if (typeof job_id === 'function')
+            throw 'Argument job_id can not be a function';
+        if (typeof lines === 'function')
+            throw 'Argument lines can not be a function';
+        if (_callback && typeof _callback !== 'function')
+            throw 'Argument _callback must be a function if defined';
+        if (_errorCallback && typeof _errorCallback !== 'function')
+            throw 'Argument _errorCallback must be a function if defined';
+        if (typeof arguments === 'function' && arguments.length > 2+2)
+            throw 'Too many arguments ('+arguments.length+' instead of '+(2+2)+')';
+        return json_call_ajax(_url, "NarrativeJobService.add_job_logs",
+            [job_id, lines], 1, _callback, _errorCallback);
     };
- 
+
+     this.get_job_logs = function (params, _callback, _errorCallback) {
+        if (typeof params === 'function')
+            throw 'Argument params can not be a function';
+        if (_callback && typeof _callback !== 'function')
+            throw 'Argument _callback must be a function if defined';
+        if (_errorCallback && typeof _errorCallback !== 'function')
+            throw 'Argument _errorCallback must be a function if defined';
+        if (typeof arguments === 'function' && arguments.length > 1+2)
+            throw 'Too many arguments ('+arguments.length+' instead of '+(1+2)+')';
+        return json_call_ajax(_url, "NarrativeJobService.get_job_logs",
+            [params], 1, _callback, _errorCallback);
+    };
+
+     this.finish_job = function (job_id, params, _callback, _errorCallback) {
+        if (typeof job_id === 'function')
+            throw 'Argument job_id can not be a function';
+        if (typeof params === 'function')
+            throw 'Argument params can not be a function';
+        if (_callback && typeof _callback !== 'function')
+            throw 'Argument _callback must be a function if defined';
+        if (_errorCallback && typeof _errorCallback !== 'function')
+            throw 'Argument _errorCallback must be a function if defined';
+        if (typeof arguments === 'function' && arguments.length > 2+2)
+            throw 'Too many arguments ('+arguments.length+' instead of '+(2+2)+')';
+        return json_call_ajax(_url, "NarrativeJobService.finish_job",
+            [job_id, params], 0, _callback, _errorCallback);
+    };
+
+     this.check_job = function (job_id, _callback, _errorCallback) {
+        if (typeof job_id === 'function')
+            throw 'Argument job_id can not be a function';
+        if (_callback && typeof _callback !== 'function')
+            throw 'Argument _callback must be a function if defined';
+        if (_errorCallback && typeof _errorCallback !== 'function')
+            throw 'Argument _errorCallback must be a function if defined';
+        if (typeof arguments === 'function' && arguments.length > 1+2)
+            throw 'Too many arguments ('+arguments.length+' instead of '+(1+2)+')';
+        return json_call_ajax(_url, "NarrativeJobService.check_job",
+            [job_id], 1, _callback, _errorCallback);
+    };
+
+     this.check_jobs = function (params, _callback, _errorCallback) {
+        if (typeof params === 'function')
+            throw 'Argument params can not be a function';
+        if (_callback && typeof _callback !== 'function')
+            throw 'Argument _callback must be a function if defined';
+        if (_errorCallback && typeof _errorCallback !== 'function')
+            throw 'Argument _errorCallback must be a function if defined';
+        if (typeof arguments === 'function' && arguments.length > 1+2)
+            throw 'Too many arguments ('+arguments.length+' instead of '+(1+2)+')';
+        return json_call_ajax(_url, "NarrativeJobService.check_jobs",
+            [params], 1, _callback, _errorCallback);
+    };
+
+     this.cancel_job = function (params, _callback, _errorCallback) {
+        if (typeof params === 'function')
+            throw 'Argument params can not be a function';
+        if (_callback && typeof _callback !== 'function')
+            throw 'Argument _callback must be a function if defined';
+        if (_errorCallback && typeof _errorCallback !== 'function')
+            throw 'Argument _errorCallback must be a function if defined';
+        if (typeof arguments === 'function' && arguments.length > 1+2)
+            throw 'Too many arguments ('+arguments.length+' instead of '+(1+2)+')';
+        return json_call_ajax(_url, "NarrativeJobService.cancel_job",
+            [params], 0, _callback, _errorCallback);
+    };
+
+     this.check_job_canceled = function (params, _callback, _errorCallback) {
+        if (typeof params === 'function')
+            throw 'Argument params can not be a function';
+        if (_callback && typeof _callback !== 'function')
+            throw 'Argument _callback must be a function if defined';
+        if (_errorCallback && typeof _errorCallback !== 'function')
+            throw 'Argument _errorCallback must be a function if defined';
+        if (typeof arguments === 'function' && arguments.length > 1+2)
+            throw 'Too many arguments ('+arguments.length+' instead of '+(1+2)+')';
+        return json_call_ajax(_url, "NarrativeJobService.check_job_canceled",
+            [params], 1, _callback, _errorCallback);
+    };
+
 
     /*
      * JSON call using jQuery method.
      */
-    function json_call_ajax(method, params, numRets, callback, errorCallback) {
-        var deferred = $.Deferred();
+    function json_call_ajax(srv_url, method, params, numRets, callback, errorCallback, json_rpc_context, deferred) {
+        if (!deferred)
+            deferred = $.Deferred();
 
         if (typeof callback === 'function') {
            deferred.done(callback);
@@ -115,6 +211,8 @@ function NarrativeJobService(url, auth, auth_cb) {
             version: "1.1",
             id: String(Math.random()).slice(2),
         };
+        if (json_rpc_context)
+            rpc['context'] = json_rpc_context;
 
         var beforeSend = null;
         var token = (_auth_cb && typeof _auth_cb === 'function') ? _auth_cb()
@@ -126,12 +224,13 @@ function NarrativeJobService(url, auth, auth_cb) {
         }
 
         var xhr = jQuery.ajax({
-            url: _url,
+            url: srv_url,
             dataType: "text",
             type: 'POST',
             processData: false,
             data: JSON.stringify(rpc),
             beforeSend: beforeSend,
+            timeout: _timeout,
             success: function (data, status, xhr) {
                 var result;
                 try {
@@ -141,7 +240,7 @@ function NarrativeJobService(url, auth, auth_cb) {
                     deferred.reject({
                         status: 503,
                         error: err,
-                        url: _url,
+                        url: srv_url,
                         resp: data
                     });
                     return;
@@ -172,5 +271,3 @@ function NarrativeJobService(url, auth, auth_cb) {
         return promise;
     }
 }
-
-
