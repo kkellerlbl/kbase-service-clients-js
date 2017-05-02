@@ -4,9 +4,10 @@ define([
     './utils',
     './client/workspace',
     './client/userProfile',
-    './client/narrativeMethodStore'
+    './client/narrativeMethodStore',
+    'kb_common/jsonRpc/dynamicServiceClient',
 ],
-    function (Promise, Utils, APIUtils, Workspace, UserProfile, NarrativeMethodStore) {
+    function (Promise, Utils, APIUtils, Workspace, UserProfile, NarrativeMethodStore, GenericClient) {
 
         function factory(config) {
             var runtime = config.runtime,
@@ -18,6 +19,12 @@ define([
                 }),
                 narrativeMethodStoreClient = new NarrativeMethodStore(runtime.getConfig('services.narrative_method_store.url'), {
                     token: runtime.getService('session').getAuthToken()
+                }),
+                narrativeClient = new GenericClient({
+                    module: 'NarrativeService',
+                    url: runtime.config('services.service_wizard.url'),
+                    token: runtime.service('session').getAuthToken(),
+                    version : 'dev',
                 });
             function isValidNarrative(workspaceObject) {
                 if (workspaceObject.metadata.narrative &&
@@ -63,147 +70,146 @@ define([
             }
             function getNarratives(cfg) {
                 // get all the narratives the user can see.
-                return workspaceClient.list_workspace_info(cfg.params)
-                    .then(function (data) {
-                        var workspaces = [], i, wsInfo;
-                        for (i = 0; i < data.length; i += 1) {
-                            wsInfo = APIUtils.workspaceInfoToObject(data[i]);
-                            if (isValidNarrative(wsInfo) && applyNarrativeFilter(cfg.filter)) {
-                                workspaces.push(wsInfo);
-                            }
-                        }
 
-                        var objectRefs = workspaces.map(function (w) {
-                            return {
-                                ref: w.id + '/' + w.metadata.narrative
-                            };
-                        });
+                var method_map = {
+                  narratorial : 'list_narratorials',
+                  mine        : 'list_narratives',
+                  public      : 'list_narratives',
+                  shared      : 'list_narratives',
+                }
 
-                        if (objectRefs.length === 0) {
-                            return [workspaces, []];
-                        }
+                var data_key_map = {
+                  narratorial : 'narratorials',
+                  mine        : 'narratives',
+                  public      : 'narratives',
+                  shared      : 'narratives',
+                }
 
-                        // Now get the corresponding object metadata for each narrative workspace
-                        return [workspaces, workspaceClient.get_object_info_new({
-                                objects: objectRefs,
-                                ignoreErrors: 1,
-                                includeMetadata: 1
-                            })];
-                    })
-                    .spread(function (workspaces, data) {
-                        var narratives = [];
-                        data.forEach(function (objectInfo, index) {
-                            // If one of the object ids from the workspace metadata (.narrative) did not actually
-                            // result in a hit, skip it. This can occur if a narrative is corrupt -- the narrative object
-                            // was deleted or replaced and the workspace metadata not updated.
-                            if (!objectInfo) {
-                                //console.log('WARNING: workspace ' + object.wsid + ' does not contain a matching narrative object');
-                                return;
-                            }
-                            var cellTypes = {app: 0, markdown: 0, code: 0};
-                            var apps = [];
-                            var methods = [];
-                            // Make sure it is a valid narrative object.
-                            var object = APIUtils.object_info_to_object(objectInfo);
-                            if (object.typeName !== 'Narrative') {
-                                return;
-                            }
+                var method = method_map[cfg.params.type];
+                var list_params = { type : cfg.params.type };
 
-                            if (object.metadata) {
+                return narrativeClient.callFunc(method, [ list_params ])
+                  .then(function(data) {
 
-                                // Convert some narrative-specific metadata properties.
-                                if (object.metadata.job_info) {
-                                    object.metadata.jobInfo = JSON.parse(object.metadata.job_info);
-                                }
-                                if (object.metadata.methods) {
-                                    object.metadata.cellInfo = JSON.parse(object.metadata.methods);
-                                }
+                    var fetched_narratives = data[0][ data_key_map[ cfg.params.type ] ];
 
-                                /* Old narrative apps and method are stored in the cell info.
-                                 * metadata: {
-                                 *    methods: {
-                                 *       app: {
-                                 *          myapp: 1,
-                                 *          myapp2: 1
-                                 *       },
-                                 *       method: {
-                                 *          mymethod: 1,
-                                 *          mymethod2: 1
-                                 *       }
-                                 *    }
-                                 * }
-                                 */
-                                if (object.metadata.cellInfo) {
-                                    if (object.metadata.cellInfo.app) {
-                                        Object.keys(object.metadata.cellInfo.app).forEach(function (key) {
-                                            apps.push(parseMethodId(key));
-                                        });
-                                    }
-                                    if (object.metadata.cellInfo.method) {
-                                        Object.keys(object.metadata.cellInfo.method).forEach(function (key) {
-                                            methods.push(parseMethodId(key));
-                                        });
-                                    }
-                                }
+                    var narratives = [];
 
-                                /* New narrative metadata is stored as a flat set of
-                                 * metdata: {
-                                 *    app.myapp: 1,
-                                 *    app.myotherapp: 1,
-                                 *    method.my_method: 1,
-                                 *    method.my_other_method: 1
-                                 * }
-                                 * Note that cell jupyter cell types are stored as 
-                                 * jupyter.markdown: "n" and
-                                 * jupyter.code: "n"
-                                 * The "." is, confusingly, actually a dot in the key has
-                                 * for the app and method keys.
-                                 * 
-                                 */
-                                Object.keys(object.metadata).forEach(function (key) {
-                                    var keyParts = key.split('.');
-                                    switch (keyParts[0]) {
-                                    case 'method':
-                                        // New style app cells have the metadata prefix set to 
-                                        // "method." !!
-                                        apps.push(parseMethodId(keyParts[1]));
-                                        cellTypes['app'] += 1;
-                                        break;
-                                    case 'app':
-                                        // Old style kbase (markdown-app) cells used "app." as the
-                                        // metadata key prefix. We just treat them as regular apps
-                                        // now.
-                                        apps.push(parseMethodId(keyParts[1]));
-                                        cellTypes['app'] += 1;
-                                        break;
-                                    // case 'method':
-                                    //     var method = parseMethodId(keyParts[1]);
-                                    //     // methods.push(keyParts[1]);
-                                    //     method.source = 'new';
-                                    //     methods.push(method);
-                                    //     cellTypes['app'] += 1;
-                                    //     break;
-                                    case 'ipython':
-                                    case 'jupyter':
-                                        var cellType = keyParts[1];
-                                        cellTypes[cellType] += parseInt(object.metadata[key]);
-                                        break;
-                                    default:
-                                        // console.log('REALLY?', object.metadata);
-                                    }                                
-                                });
-                            }
+                    fetched_narratives.forEach( function(fetched) {
 
-                            narratives.push({
-                                workspace: workspaces[index],
-                                object: object,
-                                apps: apps,
-                                methods: methods,
-                                cellTypes: cellTypes
-                            });
-                        });
-                        return narratives;
+                      var object    = APIUtils.object_info_to_object( fetched.nar);
+                      var workspace = APIUtils.workspaceInfoToObject( fetched.ws );
+
+                      var cellTypes = {app: 0, markdown: 0, code: 0};
+                      var apps = [];
+                      var methods = [];
+
+                      if (object.typeName !== 'Narrative') {
+                          return;
+                      }
+
+                      if (object.metadata) {
+
+                          // Convert some narrative-specific metadata properties.
+                          if (object.metadata.job_info) {
+                              object.metadata.jobInfo = JSON.parse(object.metadata.job_info);
+                          }
+                          if (object.metadata.methods) {
+                              object.metadata.cellInfo = JSON.parse(object.metadata.methods);
+                          }
+
+                          /* Old narrative apps and method are stored in the cell info.
+                           * metadata: {
+                           *    methods: {
+                           *       app: {
+                           *          myapp: 1,
+                           *          myapp2: 1
+                           *       },
+                           *       method: {
+                           *          mymethod: 1,
+                           *          mymethod2: 1
+                           *       }
+                           *    }
+                           * }
+                           */
+
+                          if (object.metadata.cellInfo) {
+                              if (object.metadata.cellInfo.app) {
+                                  Object.keys(object.metadata.cellInfo.app).forEach(function (key) {
+                                      apps.push(parseMethodId(key));
+                                  });
+                              }
+                              if (object.metadata.cellInfo.method) {
+                                  Object.keys(object.metadata.cellInfo.method).forEach(function (key) {
+                                      methods.push(parseMethodId(key));
+                                  });
+                              }
+                          }
+
+                          /* New narrative metadata is stored as a flat set of
+                           * metdata: {
+                           *    app.myapp: 1,
+                           *    app.myotherapp: 1,
+                           *    method.my_method: 1,
+                           *    method.my_other_method: 1
+                           * }
+                           * Note that cell jupyter cell types are stored as
+                           * jupyter.markdown: "n" and
+                           * jupyter.code: "n"
+                           * The "." is, confusingly, actually a dot in the key has
+                           * for the app and method keys.
+                           *
+                           */
+
+                          Object.keys(object.metadata).forEach(function (key) {
+
+                              var keyParts = key.split('.');
+                              switch (keyParts[0]) {
+                              case 'method':
+                                  // New style app cells have the metadata prefix set to
+                                  // "method." !!
+                                  apps.push(parseMethodId(keyParts[1]));
+                                  cellTypes['app'] += 1;
+                                  break;
+                              case 'app':
+                                  // Old style kbase (markdown-app) cells used "app." as the
+                                  // metadata key prefix. We just treat them as regular apps
+                                  // now.
+                                  apps.push(parseMethodId(keyParts[1]));
+                                  cellTypes['app'] += 1;
+                                  break;
+                              // case 'method':
+                              //     var method = parseMethodId(keyParts[1]);
+                              //     // methods.push(keyParts[1]);
+                              //     method.source = 'new';
+                              //     methods.push(method);
+                              //     cellTypes['app'] += 1;
+                              //     break;
+                              case 'ipython':
+                              case 'jupyter':
+                                  var cellType = keyParts[1];
+                                  cellTypes[cellType] += parseInt(object.metadata[key]);
+                                  break;
+                              default:
+                                  // console.log('REALLY?', object.metadata);
+                              }
+
+                          });
+
+                      }
+
+                      narratives.push({
+                          workspace: workspace,
+                          object: object,
+                          apps: apps,
+                          methods: methods,
+                          cellTypes: cellTypes
+                      });
                     });
+
+                  return narratives;
+
+              });
             }
             function getPermissions(narratives) {
                 return Promise.try(function () {
@@ -300,6 +306,7 @@ define([
                             // And what is left are all the users who are collaborating on this same narrative.
                             // okay, now we have a list of all OTHER people sharing in this narrative.
                             // All of these folks are common collaborators.
+
                             filtered.forEach(function (x) {
                                 Utils.incrProp(collaborators, x.username)
                             });
