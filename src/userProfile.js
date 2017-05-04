@@ -2,16 +2,16 @@
 /*jslint white: true, browser: true  */
 
 define([
-    'bluebird',
-    'kb_common/utils',
-    'md5',
-    './client/userProfile'
-],
-    function (Promise, Utils, md5, UserProfileService) {
+        'bluebird',
+        'kb_common/utils',
+        'md5',
+        './client/userProfile'
+    ],
+    function(Promise, Utils, md5, UserProfileService) {
         'use strict';
         var UserProfile = Object.create({}, {
             init: {
-                value: function (cfg) {
+                value: function(cfg) {
                     if (!cfg.runtime) {
                         throw 'Cannot create a profile object without a runtime';
                     }
@@ -37,15 +37,15 @@ define([
                 }
             },
             loadProfile: {
-                value: function () {
-                    return Promise.try(function () {
+                value: function() {
+                    return Promise.try(function() {
                         if (!this.userProfileClient) {
                             // We don't fetch any data if a user is not logged in. 
                             this.userRecord = null;
                             return this;
                         }
                         return this.userProfileClient.get_user_profile([this.username])
-                            .then(function (data) {
+                            .then(function(data) {
                                 if (data[0]) {
                                     // profile found
                                     this.userRecord = data[0];
@@ -58,12 +58,12 @@ define([
                 }
             },
             getProfile: {
-                value: function () {
+                value: function() {
                     return this.userRecord;
                 }
             },
             deleteUserdata: {
-                value: function () {
+                value: function() {
                     this.userRecord.profile.userdata = null;
                     this.userRecord.profile.metadata.modified = (new Date()).toISOString();
                     return this.userProfileClient.set_user_profile({
@@ -72,7 +72,7 @@ define([
                 }
             },
             saveProfile: {
-                value: function () {
+                value: function() {
                     return this.userProfileClient.set_user_profile({
                         profile: this.userRecord
                     });
@@ -86,7 +86,7 @@ define([
              TODO: we must have a flag to set whether the profile is valid or not.
              */
             updateProfile: {
-                value: function (newRecord) {
+                value: function(newRecord) {
                     var recordCopy = Utils.merge({}, this.userRecord),
                         merged = Utils.merge(recordCopy, newRecord);
                     if (this.userRecordHistory.length === 10) {
@@ -101,7 +101,7 @@ define([
                 }
             },
             getProfileStatus: {
-                value: function () {
+                value: function() {
                     var profileStatus;
                     if (this.userRecord) {
                         if (this.userRecord.user) {
@@ -128,16 +128,16 @@ define([
                 }
             },
             createProfile: {
-                value: function () {
+                value: function() {
                     var that = this;
                     return that.userProfileClient.lookup_globus_user([that.username])
-                        .then(function (data) {
+                        .then(function(data) {
                             if (!data || !data[that.username]) {
                                 throw new Error('No user account found for ' + that.username);
                             }
                             return data[that.username];
                         })
-                        .then(function (userData) {
+                        .then(function(userData) {
                             // account data has been set ... copy the account fields to the corresponding user and profile fields.
                             that.userRecord = that.makeProfile({
                                 username: userData.userName,
@@ -150,10 +150,10 @@ define([
                                 profile: that.userRecord
                             });
                         })
-                        .then(function () {
+                        .then(function() {
                             return that;
                         })
-                        .catch(function (err) {
+                        .catch(function(err) {
                             console.error('ERROR SAVING USER PROFILE: ' + err);
                             console.error(err);
                             throw err;
@@ -161,9 +161,9 @@ define([
                 }
             },
             createStubProfile: {
-                value: function (options) {
+                value: function(options) {
                     return this.userProfileClient.lookup_globus_user([this.username])
-                        .then(function (data) {
+                        .then(function(data) {
                             if (!data || !data[this.username]) {
                                 throw new Error('No user account found for ' + this.username);
                                 return;
@@ -186,7 +186,7 @@ define([
                 }
             },
             makeStubProfile: {
-                value: function (baseProfile) {
+                value: function(baseProfile) {
                     var record = {
                         user: {
                             username: baseProfile.username,
@@ -206,7 +206,7 @@ define([
                 }
             },
             makeProfile: {
-                value: function (baseProfile) {
+                value: function(baseProfile) {
                     var record = this.makeStubProfile(baseProfile);
 
                     record.profile.userdata = {};
@@ -220,7 +220,7 @@ define([
                 }
             },
             getAvatarURL: {
-                value: function (options) {
+                value: function(options) {
                     options = options || {};
                     var gdefault = this.getProp('profile.userdata.avatar.gravatar_default'),
                         email = this.getProp('profile.userdata.email');
@@ -232,14 +232,14 @@ define([
                 }
             },
             makeGravatarURL: {
-                value: function (email, size, rating, gdefault) {
+                value: function(email, size, rating, gdefault) {
                     var md5Hash = md5.hash(email),
                         url = 'https://www.gravatar.com/avatar/' + md5Hash + '?s=' + size + '&amp;r=' + rating + '&d=' + gdefault;
                     return url;
                 }
             },
             getUserProfileSchema: {
-                value: function () {
+                value: function() {
                     // For building and validating user form input for a user profile.
                     // This is a subset of the user profile schema.
                     // FORNOW: fairly loose, other than sensible limits and formatting checks.
@@ -360,7 +360,7 @@ define([
                 }
             },
             getProp: {
-                value: function (propName, defaultValue) {
+                value: function(propName, defaultValue) {
                     if (this.userRecord) {
                         return Utils.getProp(this.userRecord, propName, defaultValue);
                     }
@@ -368,7 +368,7 @@ define([
                 }
             },
             nthHistory: {
-                value: function (n) {
+                value: function(n) {
                     // n is how many saves back to get it.
                     // e.g. n=1 means the most recent save
                     if (n <= this.userRecordHistory.length) {
@@ -377,7 +377,7 @@ define([
                 }
             },
             calcProfileCompletion: {
-                value: function () {
+                value: function() {
                     /*
                      returns:
                      status:
@@ -407,7 +407,8 @@ define([
                             'profile.userdata.affiliations', 'profile.userdata.personal_statement'
                         ],
                         formSchema = this.getUserProfileSchema(),
-                        missing = [], i;
+                        missing = [],
+                        i;
                     switch (state) {
 
                         case 'profile':
@@ -474,8 +475,7 @@ define([
 
                     for (i = 0; i < fieldsToCheck.length; i++) {
                         var value = Utils.getProp(this.userRecord, fieldsToCheck[i]);
-                        if (fieldsToCheck[i] === 'profile.userdata.personal_statement') {
-                        }
+                        if (fieldsToCheck[i] === 'profile.userdata.personal_statement') {}
                         if (Utils.isBlank(value)) {
                             var field = Utils.getSchemaNode(formSchema, fieldsToCheck[i]);
                             missing.push(field);
