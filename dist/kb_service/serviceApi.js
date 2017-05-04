@@ -8,7 +8,8 @@ define([
     'kb_common/jsonRpc/dynamicServiceClient',
 ], function (
     Promise,
-    Utils, A PIUtils,
+    Utils,
+    APIUtils,
     Workspace,
     UserProfile,
     NarrativeMethodStore,
