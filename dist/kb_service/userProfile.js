@@ -2,11 +2,11 @@
 /*jslint white: true, browser: true  */
 
 define([
-    'bluebird',
-    'kb_common/utils',
-    'md5',
-    './client/userProfile'
-],
+        'bluebird',
+        'kb_common/utils',
+        'md5',
+        './client/userProfile'
+    ],
     function (Promise, Utils, md5, UserProfileService) {
         'use strict';
         var UserProfile = Object.create({}, {
@@ -166,7 +166,6 @@ define([
                         .then(function (data) {
                             if (!data || !data[this.username]) {
                                 throw new Error('No user account found for ' + this.username);
-                                return;
                             }
 
                             var userData = data[this.username];
@@ -407,39 +406,40 @@ define([
                             'profile.userdata.affiliations', 'profile.userdata.personal_statement'
                         ],
                         formSchema = this.getUserProfileSchema(),
-                        missing = [], i;
+                        missing = [],
+                        i;
                     switch (state) {
 
-                        case 'profile':
-                            // NORMAL PROFILE 
-                            // May or may not be complete. Falls through so we can do the calculations below...
-                            break;
-                        case 'stub':
-                            // STUB PROFILE
-                            return {
-                                status: 'stub'
-                            };
-                        case 'accountonly':
-                            // NO PROFILE
-                            // NB: should not be here!!
-                            // no profile, but have basic account info.
-                            return {
-                                status: 'error'
-                            };
-                        case 'error':
-                            return {
-                                status: 'error'
-                            };
-                        case 'none':
-                            // NOT FOUND
-                            // no profile, no basic aaccount info
-                            return {
-                                status: 'notfound'
-                            };
-                        default:
-                            return {
-                                status: 'error'
-                            };
+                    case 'profile':
+                        // NORMAL PROFILE 
+                        // May or may not be complete. Falls through so we can do the calculations below...
+                        break;
+                    case 'stub':
+                        // STUB PROFILE
+                        return {
+                            status: 'stub'
+                        };
+                    case 'accountonly':
+                        // NO PROFILE
+                        // NB: should not be here!!
+                        // no profile, but have basic account info.
+                        return {
+                            status: 'error'
+                        };
+                    case 'error':
+                        return {
+                            status: 'error'
+                        };
+                    case 'none':
+                        // NOT FOUND
+                        // no profile, no basic aaccount info
+                        return {
+                            status: 'notfound'
+                        };
+                    default:
+                        return {
+                            status: 'error'
+                        };
                     }
 
                     // rate the profile based on percent of fields completed.
@@ -474,8 +474,7 @@ define([
 
                     for (i = 0; i < fieldsToCheck.length; i++) {
                         var value = Utils.getProp(this.userRecord, fieldsToCheck[i]);
-                        if (fieldsToCheck[i] === 'profile.userdata.personal_statement') {
-                        }
+                        if (fieldsToCheck[i] === 'profile.userdata.personal_statement') {}
                         if (Utils.isBlank(value)) {
                             var field = Utils.getSchemaNode(formSchema, fieldsToCheck[i]);
                             missing.push(field);
