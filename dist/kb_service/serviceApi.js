@@ -15,6 +15,7 @@ define([
     NarrativeMethodStore,
     GenericClient
 ) {
+    'use strict';
 
     function factory(config) {
         var runtime = config.runtime,
@@ -33,26 +34,9 @@ define([
                 token: runtime.service('session').getAuthToken()
             });
 
-        function isValidNarrative(workspaceObject) {
-            if (workspaceObject.metadata.narrative &&
-                // corrupt workspaces may have narrative set to something other than the object id of the narrative
-                /^\d+$/.test(workspaceObject.metadata.narrative) &&
-                workspaceObject.metadata.is_temporary !== 'true') {
-                return true;
-            } else {
-                return false;
-            }
-        }
-
-        function applyNarrativeFilter(ws, filter) {
-            return true;
-        }
-
         function parseMethodId(id) {
             var parts = id.split(/\//).filter(function (part) {
-                    if (part.length > 0) {
-                        return true;
-                    }
+                    return (part.length > 0);
                 }),
                 method;
             if (parts.length === 1) {
@@ -80,34 +64,29 @@ define([
         }
 
         function getNarratives(cfg) {
-            // get all the narratives the user can see.
-
             var method_map = {
                 narratorial: 'list_narratorials',
                 mine: 'list_narratives',
                 public: 'list_narratives',
                 shared: 'list_narratives',
-            }
+            };
 
             var data_key_map = {
                 narratorial: 'narratorials',
                 mine: 'narratives',
                 public: 'narratives',
                 shared: 'narratives',
-            }
+            };
 
             var method = method_map[cfg.params.type];
             var list_params = { type: cfg.params.type };
 
             return narrativeClient.callFunc(method, [list_params])
                 .then(function (data) {
-
                     var fetched_narratives = data[0][data_key_map[cfg.params.type]];
-
                     var narratives = [];
 
                     fetched_narratives.forEach(function (fetched) {
-
                         var object = APIUtils.object_info_to_object(fetched.nar);
                         var workspace = APIUtils.workspaceInfoToObject(fetched.ws);
 
@@ -120,7 +99,6 @@ define([
                         }
 
                         if (object.metadata) {
-
                             // Convert some narrative-specific metadata properties.
                             if (object.metadata.job_info) {
                                 object.metadata.jobInfo = JSON.parse(object.metadata.job_info);
@@ -169,11 +147,8 @@ define([
                              * jupyter.code: "n"
                              * The "." is, confusingly, actually a dot in the key has
                              * for the app and method keys.
-                             *
                              */
-
                             Object.keys(object.metadata).forEach(function (key) {
-
                                 var keyParts = key.split('.');
                                 switch (keyParts[0]) {
                                 case 'method':
@@ -189,13 +164,6 @@ define([
                                     apps.push(parseMethodId(keyParts[1]));
                                     cellTypes['app'] += 1;
                                     break;
-                                    // case 'method':
-                                    //     var method = parseMethodId(keyParts[1]);
-                                    //     // methods.push(keyParts[1]);
-                                    //     method.source = 'new';
-                                    //     methods.push(method);
-                                    //     cellTypes['app'] += 1;
-                                    //     break;
                                 case 'ipython':
                                 case 'jupyter':
                                     var cellType = keyParts[1];
@@ -204,9 +172,7 @@ define([
                                 default:
                                     // console.log('REALLY?', object.metadata);
                                 }
-
                             });
-
                         }
 
                         narratives.push({
@@ -219,7 +185,6 @@ define([
                     });
 
                     return narratives;
-
                 });
         }
 
@@ -243,13 +208,9 @@ define([
                             var narrative = narratives[i];
                             narrative.permissions = Utils.object_to_array(permissions[i], 'username', 'permission')
                                 .filter(function (x) {
-                                    if (x.username === username ||
+                                    return !(x.username === username ||
                                         x.username === '*' ||
-                                        x.username === narrative.workspace.owner) {
-                                        return false;
-                                    } else {
-                                        return true;
-                                    }
+                                        x.username === narrative.workspace.owner);
                                 })
                                 .sort(function (a, b) {
                                     if (a.username < b.username) {
@@ -273,158 +234,30 @@ define([
             return narrativeMethodStoreClient.list_methods({});
         }
 
-        function getNarrativesWorkspace(cfg) {
-            // get all the narratives the user can see.
-            return workspaceClient.list_workspace_info(cfg.params)
-                .then(function (data) {
-                    var workspaces = [],
-                        i, wsInfo;
-                    for (i = 0; i < data.length; i += 1) {
-                        wsInfo = APIUtils.workspaceInfoToObject(data[i]);
-                        if (isValidNarrative(wsInfo) && applyNarrativeFilter(cfg.filter)) {
-                            workspaces.push(wsInfo);
-                        }
-                    }
-
-                    var objectRefs = workspaces.map(function (w) {
-                        return {
-                            ref: w.id + '/' + w.metadata.narrative
-                        };
-                    });
-
-                    if (objectRefs.length === 0) {
-                        return [workspaces, []];
-                    }
-
-                    // Now get the corresponding object metadata for each narrative workspace
-                    return [workspaces, workspaceClient.get_object_info_new({
-                        objects: objectRefs,
-                        ignoreErrors: 1,
-                        includeMetadata: 1
-                    })];
-                })
-                .spread(function (workspaces, data) {
-                    var narratives = [];
-                    data.forEach(function (objectInfo, index) {
-                        // If one of the object ids from the workspace metadata (.narrative) did not actually
-                        // result in a hit, skip it. This can occur if a narrative is corrupt -- the narrative object
-                        // was deleted or replaced and the workspace metadata not updated.
-                        if (!objectInfo) {
-                            //console.log('WARNING: workspace ' + object.wsid + ' does not contain a matching narrative object');
-                            return;
-                        }
-                        var cellTypes = { app: 0, markdown: 0, code: 0 };
-                        var apps = [];
-                        var methods = [];
-                        // Make sure it is a valid narrative object.
-                        var object = APIUtils.object_info_to_object(objectInfo);
-                        if (object.typeName !== 'Narrative') {
-                            return;
-                        }
-
-                        if (object.metadata) {
-
-                            // Convert some narrative-specific metadata properties.
-                            if (object.metadata.job_info) {
-                                object.metadata.jobInfo = JSON.parse(object.metadata.job_info);
-                            }
-                            if (object.metadata.methods) {
-                                object.metadata.cellInfo = JSON.parse(object.metadata.methods);
-                            }
-
-                            /* Old narrative apps and method are stored in the cell info.
-                             * metadata: {
-                             *    methods: {
-                             *       app: {
-                             *          myapp: 1,
-                             *          myapp2: 1
-                             *       },
-                             *       method: {
-                             *          mymethod: 1,
-                             *          mymethod2: 1
-                             *       }
-                             *    }
-                             * }
-                             */
-                            if (object.metadata.cellInfo) {
-                                if (object.metadata.cellInfo.app) {
-                                    Object.keys(object.metadata.cellInfo.app).forEach(function (key) {
-                                        apps.push(parseMethodId(key));
-                                    });
-                                }
-                                if (object.metadata.cellInfo.method) {
-                                    Object.keys(object.metadata.cellInfo.method).forEach(function (key) {
-                                        methods.push(parseMethodId(key));
-                                    });
-                                }
-                            }
-
-                            /* New narrative metadata is stored as a flat set of
-                             * metdata: {
-                             *    app.myapp: 1,
-                             *    app.myotherapp: 1,
-                             *    method.my_method: 1,
-                             *    method.my_other_method: 1
-                             * }
-                             * Note that cell jupyter cell types are stored as 
-                             * jupyter.markdown: "n" and
-                             * jupyter.code: "n"
-                             * The "." is, confusingly, actually a dot in the key has
-                             * for the app and method keys.
-                             * 
-                             */
-                            Object.keys(object.metadata).forEach(function (key) {
-                                var keyParts = key.split('.');
-                                switch (keyParts[0]) {
-                                case 'method':
-                                    // New style app cells have the metadata prefix set to 
-                                    // "method." !!
-                                    apps.push(parseMethodId(keyParts[1]));
-                                    cellTypes['app'] += 1;
-                                    break;
-                                case 'app':
-                                    // Old style kbase (markdown-app) cells used "app." as the
-                                    // metadata key prefix. We just treat them as regular apps
-                                    // now.
-                                    apps.push(parseMethodId(keyParts[1]));
-                                    cellTypes['app'] += 1;
-                                    break;
-                                case 'ipython':
-                                case 'jupyter':
-                                    var cellType = keyParts[1];
-                                    cellTypes[cellType] += parseInt(object.metadata[key]);
-                                    break;
-                                default:
-                                }
-                            });
-                        }
-
-                        narratives.push({
-                            workspace: workspaces[index],
-                            object: object,
-                            apps: apps,
-                            methods: methods,
-                            cellTypes: cellTypes
-                        });
-                    });
-                    return narratives;
-                });
-        }
-
         function getCollaborators(options) {
             var users = (options && options.users) ? options.users : [];
             users.push(runtime.getService('session').getUsername());
-            return getNarrativesWorkspace({
-                    params: {
-                        excludeGlobal: 1
-                    }
+            return Promise.all([
+                    narrativeClient.callFunc('list_narratives', [{ type: 'mine' }]),
+                    narrativeClient.callFunc('list_narratives', [{ type: 'shared' }])
+                ])
+                .then(function (results) {
+                    return results
+                        .reduce(function (accum, result) {
+                            return accum.concat(result[0].narratives);
+                        }, [])
+                        .map(function (narrative) {
+                            narrative.object = APIUtils.object_info_to_object(narrative.nar);
+                            narrative.workspace = APIUtils.workspaceInfoToObject(narrative.ws);
+                            return narrative;
+                        });
                 })
                 .then(function (narratives) {
                     return getPermissions(narratives);
                 })
                 .then(function (narratives) {
                     var collaborators = {},
-                        i, perms, pass;
+                        i, perms;
 
                     for (i = 0; i < narratives.length; i += 1) {
                         // make sure logged in user is here
@@ -433,28 +266,23 @@ define([
                         perms = narratives[i].permissions;
 
                         // make sure all users are either owner or in the permissions list.
-                        pass = true;
-                        if (_.some(users, function (user) {
-                                if (narratives[i].workspace.owner === user ||
-                                    _.find(perms, function (x) {
+                        if (users.some(function (user) {
+                                return !(
+                                    narratives[i].workspace.owner === user ||
+                                    perms.some(function (x) {
                                         return x.username === user;
-                                    })) {
-                                    return false;
-                                } else {
-                                    return true;
-                                }
+                                    })
+                                );
                             })) {
                             continue;
                         }
 
                         // Remove participants and the public user.
                         var filtered = perms.filter(function (x) {
-                            if (_.contains(users, x.username) ||
-                                x.username === '*') {
-                                return false;
-                            } else {
-                                return true;
-                            }
+                            return !(
+                                users.indexOf(x.username) >= 0 ||
+                                x.username === '*'
+                            );
                         });
 
                         // And what is left are all the users who are collaborating on this same narrative.
@@ -462,12 +290,12 @@ define([
                         // All of these folks are common collaborators.
 
                         filtered.forEach(function (x) {
-                            Utils.incrProp(collaborators, x.username)
+                            Utils.incrProp(collaborators, x.username);
                         });
                     }
                     var collabs = Utils.object_to_array(collaborators, 'username', 'count');
                     var usersToFetch = collabs.map(function (x) {
-                        return x.username
+                        return x.username;
                     });
                     return [collabs, usersToFetch, userProfileClient.get_user_profile(usersToFetch)];
                 })
@@ -478,7 +306,7 @@ define([
                         // are in this list?? If so, remove that user from the network.
                         // TODO: we need a way to report these cases -- they should not occur or be very rare.
                         if (!data[i] || !data[i].user) {
-                            console.log('WARNING: user ' + usersToFetch[i] + ' is a sharing partner but has no profile.');
+                            console.warn('WARNING: user ' + usersToFetch[i] + ' is a sharing partner but has no profile.');
                         } else {
                             collabs[i].realname = data[i].user.realname;
                         }
