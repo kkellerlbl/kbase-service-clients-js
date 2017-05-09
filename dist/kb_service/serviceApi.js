@@ -83,20 +83,23 @@ define([
 
             return narrativeClient.callFunc(method, [list_params])
                 .then(function (data) {
-                    var fetched_narratives = data[0][data_key_map[cfg.params.type]];
+                    var fetchedNarratives = data[0][data_key_map[cfg.params.type]];
+                    // The narrative service, for now, does not provide an option to filter out 
+                    // temporary narratives. Generally we don't care about them -- they do not have a title
+                    // yet, and thus are not fully-formed in terms of the workspace metadata.
                     var narratives = [];
 
-                    fetched_narratives.forEach(function (fetched) {
-                        var object = APIUtils.object_info_to_object(fetched.nar);
-                        var workspace = APIUtils.workspaceInfoToObject(fetched.ws);
+                    for (var i = 0; i < fetchedNarratives.length; i += 1) {
+                        var narrative = fetchedNarratives[i];
+                        var workspace = APIUtils.workspaceInfoToObject(narrative.ws);
+                        if (workspace.metadata.is_temporary === 'true') {
+                            continue;
+                        }
 
+                        var object = APIUtils.object_info_to_object(narrative.nar);
                         var cellTypes = { app: 0, markdown: 0, code: 0 };
                         var apps = [];
                         var methods = [];
-
-                        if (object.typeName !== 'Narrative') {
-                            return;
-                        }
 
                         if (object.metadata) {
                             // Convert some narrative-specific metadata properties.
@@ -182,7 +185,7 @@ define([
                             methods: methods,
                             cellTypes: cellTypes
                         });
-                    });
+                    }
 
                     return narratives;
                 });
