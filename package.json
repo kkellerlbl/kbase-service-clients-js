@@ -1,5 +1,6 @@
 {
     "name": "kbase-service-clients-js",
+    "version": "3.3.7",
     "description": "Javascript clients for the KBase API",
     "repository": {
         "type": "git",
